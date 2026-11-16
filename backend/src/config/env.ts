@@ -43,7 +43,13 @@ if (!/^https?:\/\//.test(settings.APP_ORIGIN) ||
     (settings.APP_ORIGIN !== appOrigin && settings.APP_ORIGIN !== appOrigin + '/')) {
   throw new Error('APP_ORIGIN must be the app URL with no path, query, or fragment.');
 }
-export const env = { ...settings, APP_ORIGIN: appOrigin };
+const reuseGmailClient = !settings.GOOGLE_CLIENT_ID && !settings.GOOGLE_CLIENT_SECRET;
+export const env = {
+  ...settings,
+  APP_ORIGIN: appOrigin,
+  GOOGLE_CLIENT_ID: reuseGmailClient ? settings.GMAIL_CLIENT_ID : settings.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: reuseGmailClient ? settings.GMAIL_CLIENT_SECRET : settings.GOOGLE_CLIENT_SECRET,
+};
 export const production = env.NODE_ENV === 'production';
 if (production && !env.APP_ORIGIN.startsWith('https://')) {
   throw new Error('APP_ORIGIN must be the public HTTPS app URL in production.');

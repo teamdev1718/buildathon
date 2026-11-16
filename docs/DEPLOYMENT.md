@@ -42,7 +42,7 @@ Render injects `PORT`. The frontend needs no deployed environment variables. A p
 
 Use a Gmail mailbox you control as the sender. The app can remain on its Render subdomain. The mailbox owner grants the backend send access once. Recipients need no Google authorization to receive emails.
 
-1. Enable **Gmail API** in the Google Cloud project for your sender. Set up Google Auth Platform and create a **Web application** OAuth client for sending. Keep these credentials separate from the app's Google sign-in client. Add `https://developers.google.com/oauthplayground` to this client's **Authorized redirect URIs**.
+1. Enable **Gmail API** in the Google Cloud project for your sender. Set up Google Auth Platform and create a **Web application** OAuth client for sending. Add `https://developers.google.com/oauthplayground` to this client's **Authorized redirect URIs**.
 2. Open [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/). In the settings gear, select **Use your own OAuth credentials** and enter the Gmail sender client's ID and secret. Use **Access type → Offline**.
 3. Enter the custom scope `https://www.googleapis.com/auth/gmail.send`, click **Authorize APIs**, and sign in as the sender mailbox. Exchange the authorization code for tokens and copy the **refresh token**. If the OAuth app is in External Testing, add the sender to **Audience → Test users**. Refresh tokens for this scope expire after seven days in External Testing. Set up the appropriate publishing and verification status for ongoing deployment. [Google OAuth token expiration](https://developers.google.com/identity/protocols/oauth2#expiration)
 4. In Render, set `EMAIL_PROVIDER=gmail`, `EMAIL_FROM` to the exact mailbox address, and add `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN`. Remove the obsolete `RESEND_API_KEY` if present, save, and redeploy. A deployment still configured with the old email provider setting starts with email disabled until switched to Gmail.
@@ -52,7 +52,9 @@ Gmail accepts MIME messages over HTTPS. The service avoids automatic replay of a
 
 ## Google OAuth
 
-Create a **Web application** OAuth client and configure the consent screen and testers as needed. Register exactly `https://your-service.onrender.com/api/v1/auth/google/callback` in Authorized redirect URIs. Set that same value for `GOOGLE_CALLBACK_URL`. For Vite development add `http://localhost:5173/api/v1/auth/google/callback`. Set `ENABLE_GOOGLE_AUTH=true` and fill in the client ID and secret. Google sign-in uses PKCE, state, nonce, and a verified email claim. When a password account already uses the address, sign in with its existing method. The starter creates new Google accounts and reuses them by Google subject. [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect)
+Use the Gmail **Web application** OAuth client or create a separate Web application client for sign-in. On the client you use, register exactly `https://your-service.onrender.com/api/v1/auth/google/callback` under **Authorized redirect URIs**. If you are using the Gmail client, add it alongside the Playground redirect. For Vite development add `http://localhost:5173/api/v1/auth/google/callback`.
+
+Set `ENABLE_GOOGLE_AUTH=true` and set `GOOGLE_CALLBACK_URL` to the exact callback. Leave both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` blank to reuse the Gmail OAuth client. Set both to use a dedicated sign-in client. The sign-in flow requests only `openid`, `email`, and `profile`, and keeps the Gmail refresh token in the email provider. Google sign-in uses PKCE, state, nonce, and a verified email claim. When a password account already uses the address, sign in with its existing method. The starter creates new Google accounts and reuses them by Google subject. [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect)
 
 ## Telegram
 

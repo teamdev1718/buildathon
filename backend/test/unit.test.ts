@@ -11,6 +11,9 @@ Object.assign(process.env, {
   EMAIL_PROVIDER: 'mock',
   ENABLE_GOOGLE_AUTH: 'true',
   GOOGLE_CLIENT_ID: '',
+  GOOGLE_CLIENT_SECRET: '',
+  GMAIL_CLIENT_ID: '',
+  GMAIL_CLIENT_SECRET: '',
   ENABLE_TELEGRAM: 'true',
   TELEGRAM_BOT_TOKEN: '',
   CHATBOT_PROVIDER: 'gemini',
@@ -35,13 +38,18 @@ test('missing optional credentials disable integrations', () => {
   assert.equal(telegramEnabled, false);
 });
 
+function readConfig(expression: string, overrides: NodeJS.ProcessEnv) {
+  return spawnSync(process.execPath, [
+    '--import', 'tsx', '--input-type=module', '-e',
+    "import { env, googleEnabled } from './src/config/env.ts'; console.log(" + expression + ')',
+  ], { encoding: 'utf8', env: { ...process.env, ...overrides } });
+}
+
 test('production configuration accepts a trailing slash and identifies invalid settings', () => {
   const origin = 'https://example.onrender.com';
-  const read = (overrides: NodeJS.ProcessEnv) => spawnSync(process.execPath, [
-    '--import', 'tsx', '--input-type=module', '-e',
-    "import { env } from './src/config/env.ts'; console.log(env.APP_ORIGIN)",
-  ], { encoding: 'utf8', env: { ...process.env, NODE_ENV: 'production',
-    APP_ORIGIN: origin + '/', EMAIL_PROVIDER: 'gmail', ...overrides } });
+  const read = (overrides: NodeJS.ProcessEnv) => readConfig('env.APP_ORIGIN', {
+    NODE_ENV: 'production', APP_ORIGIN: origin + '/', EMAIL_PROVIDER: 'gmail', ...overrides,
+  });
 
   const valid = read({});
   assert.equal(valid.status, 0, valid.stderr);
@@ -56,6 +64,22 @@ test('production configuration accepts a trailing slash and identifies invalid s
     assert.equal(invalid.status, 1);
     assert.match(invalid.stderr, message);
   }
+});
+
+test('Google sign-in reuses the Gmail OAuth pair unless a dedicated client is configured', () => {
+  const read = (overrides: NodeJS.ProcessEnv) => readConfig(
+    '[googleEnabled, env.GOOGLE_CLIENT_ID].join(":")', {
+      GOOGLE_CALLBACK_URL: 'http://localhost:5173/api/v1/auth/google/callback',
+      GMAIL_CLIENT_ID: 'gmail-client', GMAIL_CLIENT_SECRET: 'gmail-secret', ...overrides,
+    },
+  );
+  const shared = read({});
+  assert.equal(shared.status, 0, shared.stderr);
+  assert.equal(shared.stdout.trim(), 'true:gmail-client');
+  assert.equal(read({ GOOGLE_CLIENT_ID: 'login-client' }).stdout.trim(), 'false:login-client');
+  assert.equal(read({ GOOGLE_CLIENT_ID: 'login-client', GOOGLE_CLIENT_SECRET: 'login-secret' })
+    .stdout.trim(), 'true:login-client');
+  assert.equal(read({ ENABLE_GOOGLE_AUTH: 'false' }).stdout.trim(), 'false:gmail-client');
 });
 
 test('FAQ works without a provider and validates message length', () => {
