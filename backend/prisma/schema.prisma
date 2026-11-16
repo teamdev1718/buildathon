@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["app_private"]
+}
+
+enum OtpPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  LOGIN
+  @@schema("app_private")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String
+  passwordHash    String?
+  verifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  emailOptIn      Boolean  @default(false)
+  telegramChatId  String?  @unique
+  roles           UserRole[]
+  identities      OAuthIdentity[]
+  sessions        RefreshSession[]
+  challenges      OtpChallenge[]
+  audits          AuditEvent[]
+  notifications   Notification[]
+  telegramLink    TelegramLink?
+  @@schema("app_private")
+}
+
+model OAuthIdentity {
+  provider  String
+  subject   String
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([provider, subject])
+  @@unique([userId, provider])
+  @@schema("app_private")
+}
+
+model RefreshSession {
+  id         String @id @default(uuid())
+  userId     String
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  previousHash String?
+  rotatedAt  DateTime?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@schema("app_private")
+}
+
+model Role {
+  name        String @id
+  users       UserRole[]
+  permissions RolePermission[]
+  @@schema("app_private")
+}
+
+model Permission {
+  name  String @id
+  roles RolePermission[]
+  @@schema("app_private")
+}
+
+model UserRole {
+  userId   String
+  roleName String
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     Role @relation(fields: [roleName], references: [name], onDelete: Cascade)
+  @@id([userId, roleName])
+  @@index([roleName])
+  @@schema("app_private")
+}
+
+model RolePermission {
+  roleName       String
+  permissionName String
+  role           Role @relation(fields: [roleName], references: [name], onDelete: Cascade)
+  permission     Permission @relation(fields: [permissionName], references: [name], onDelete: Cascade)
+  @@id([roleName, permissionName])
+  @@index([permissionName])
+  @@schema("app_private")
+}
+
+model OtpChallenge {
+  userId     String
+  purpose    OtpPurpose
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  digest     String
+  nonce      String
+  attempts   Int @default(0)
+  issuedAt   DateTime @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+  @@id([userId, purpose])
+  @@schema("app_private")
+}
+
+model AuditEvent {
+  id        String @id @default(uuid())
+  userId    String?
+  user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+  @@schema("app_private")
+}
+
+model Notification {
+  key        String @id
+  userId     String
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel    String
+  type       String
+  status     String @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([userId, createdAt])
+  @@schema("app_private")
+}
+
+model TelegramLink {
+  userId    String @id
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  digest    String @unique
+  expiresAt DateTime
+  @@schema("app_private")
+}
+
+model TelegramUpdate {
+  id         String @id
+  receivedAt DateTime @default(now())
+  @@index([receivedAt])
+  @@schema("app_private")
+}
+

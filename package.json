@@ -1,0 +1,36 @@
+{
+  "name": "buildathon-starter",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build --workspaces",
+    "build:deploy": "npm ci --include=dev && npm run build",
+    "start": "npm run start -w backend",
+    "start:deploy": "npm run db:migrate && npm start",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "eslint .",
+    "test": "npm test -w backend",
+    "test:integration": "npm run test:integration -w backend",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "concurrently": "9.2.5",
+    "eslint": "10.15.0",
+    "typescript-eslint": "8.72.2",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.1"
+    }
+  }
+}

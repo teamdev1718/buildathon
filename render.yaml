@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: buildathon-starter
+    runtime: node
+    plan: free
+    buildCommand: npm run build:deploy
+    startCommand: npm run start:deploy
+    healthCheckPath: /ready
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: APP_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_SECRET
+        generateValue: true
+
