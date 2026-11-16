@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 
 Object.assign(process.env, {
@@ -32,6 +33,29 @@ test('registration validation normalizes email and rejects weak passwords', () =
 test('missing optional credentials disable integrations', () => {
   assert.equal(googleEnabled, false);
   assert.equal(telegramEnabled, false);
+});
+
+test('production configuration accepts a trailing slash and identifies invalid settings', () => {
+  const origin = 'https://example.onrender.com';
+  const read = (overrides: NodeJS.ProcessEnv) => spawnSync(process.execPath, [
+    '--import', 'tsx', '--input-type=module', '-e',
+    "import { env } from './src/config/env.ts'; console.log(env.APP_ORIGIN)",
+  ], { encoding: 'utf8', env: { ...process.env, NODE_ENV: 'production',
+    APP_ORIGIN: origin + '/', EMAIL_PROVIDER: 'gmail', ...overrides } });
+
+  const valid = read({});
+  assert.equal(valid.status, 0, valid.stderr);
+  assert.equal(valid.stdout.trim(), origin);
+  for (const [overrides, message] of [
+    [{ APP_ORIGIN: origin + '/login' }, /APP_ORIGIN must be the app URL/],
+    [{ APP_ORIGIN: 'http://example.onrender.com' }, /APP_ORIGIN must be the public HTTPS app URL/],
+    [{ OTP_SECRET: process.env.JWT_SECRET }, /JWT_SECRET and OTP_SECRET must be different/],
+    [{ EMAIL_PROVIDER: 'mock' }, /EMAIL_PROVIDER must be gmail or disabled/],
+  ] as const) {
+    const invalid = read(overrides);
+    assert.equal(invalid.status, 1);
+    assert.match(invalid.stderr, message);
+  }
 });
 
 test('FAQ works without a provider and validates message length', () => {

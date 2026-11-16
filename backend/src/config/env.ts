@@ -37,13 +37,22 @@ const parsed = z.object({
 if (!parsed.success) {
   throw new Error('Invalid configuration: ' + parsed.error.issues.map(issue => issue.path.join('.')).join(', '));
 }
-export const env = parsed.data;
+const settings = parsed.data;
+const appOrigin = new URL(settings.APP_ORIGIN).origin;
+if (!/^https?:\/\//.test(settings.APP_ORIGIN) ||
+    (settings.APP_ORIGIN !== appOrigin && settings.APP_ORIGIN !== appOrigin + '/')) {
+  throw new Error('APP_ORIGIN must be the app URL with no path, query, or fragment.');
+}
+export const env = { ...settings, APP_ORIGIN: appOrigin };
 export const production = env.NODE_ENV === 'production';
-if (new URL(env.APP_ORIGIN).origin !== env.APP_ORIGIN ||
-    (production && !env.APP_ORIGIN.startsWith('https://')) ||
-    !/^https?:/.test(env.APP_ORIGIN) || env.JWT_SECRET === env.OTP_SECRET ||
-    (production && env.EMAIL_PROVIDER === 'mock')) {
-  throw new Error('Check APP_ORIGIN, independent auth secrets, and EMAIL_PROVIDER.');
+if (production && !env.APP_ORIGIN.startsWith('https://')) {
+  throw new Error('APP_ORIGIN must be the public HTTPS app URL in production.');
+}
+if (env.JWT_SECRET === env.OTP_SECRET) {
+  throw new Error('JWT_SECRET and OTP_SECRET must be different.');
+}
+if (production && env.EMAIL_PROVIDER === 'mock') {
+  throw new Error('EMAIL_PROVIDER must be gmail or disabled in production.');
 }
 export const googleEnabled = Boolean(env.ENABLE_GOOGLE_AUTH && env.GOOGLE_CLIENT_ID &&
   env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CALLBACK_URL === env.APP_ORIGIN + '/api/v1/auth/google/callback');
