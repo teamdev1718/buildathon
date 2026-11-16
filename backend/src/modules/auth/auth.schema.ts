@@ -9,5 +9,6 @@ export const otpInput = emailInput.extend({ code });
 export const registration = emailInput.extend({ name, password });
 export const loginInput = emailInput.extend({ password: z.string().min(1).max(128) });
 export const loginOtpInput = otpInput.extend({ password: loginInput.shape.password });
-export const resetInput = otpInput.extend({ password });
+export const verifyEmailInput = otpInput.extend({ password });
+export const resetInput = verifyEmailInput;
 

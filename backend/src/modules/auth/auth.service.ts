@@ -7,7 +7,7 @@ import { ApiError, log } from '../../lib/http.js';
 import { secret } from '../../lib/secrets.js';
 import { emailService } from '../email/email.service.js';
 import { invalidOtp, issueOtp, redeemOtp } from '../otp/otp.service.js';
-import type { loginInput, loginOtpInput, otpInput, registration, resetInput } from './auth.schema.js';
+import type { loginInput, loginOtpInput, registration, resetInput, verifyEmailInput } from './auth.schema.js';
 import { createSession } from './session.service.js';
 
 const hash = (password: string) => argon2.hash(password, { type: argon2.argon2id });
@@ -52,11 +52,13 @@ export async function requestCode(email: string, purpose: 'VERIFY_EMAIL' | 'RESE
   return accepted;
 }
 
-export async function verifyEmail(input: z.output<typeof otpInput>) {
+export async function verifyEmail(input: z.output<typeof verifyEmailInput>) {
   const user = await db.user.findUnique({ where: { email: input.email } });
   if (!user || user.verifiedAt) throw invalidOtp();
   await redeemOtp(user.id, 'VERIFY_EMAIL', input.code, async tx => {
-    await tx.user.update({ where: { id: user.id }, data: { verifiedAt: new Date() } });
+    // Only the person who proves mailbox ownership chooses the active password.
+    const passwordHash = await hash(input.password);
+    await tx.user.update({ where: { id: user.id }, data: { verifiedAt: new Date(), passwordHash } });
     await tx.auditEvent.create({ data: { userId: user.id, action: 'email.verified' } });
   });
   await emailService.send({ to: user.email, subject: 'Welcome', template: 'welcome', data: user.name,

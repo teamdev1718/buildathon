@@ -6,7 +6,7 @@ Open `/api/docs/` for Swagger and `/api/openapi.json` for the generated request 
 | --- | --- |
 | GET /auth/features | Usable Google, email, login OTP, and Telegram flags |
 | POST /auth/register | Accept name, email and password and request verification |
-| POST /auth/verify-email | Confirm email and code |
+| POST /auth/verify-email | Confirm email and code and set the active password |
 | POST /auth/resend-verification | Request another code with a generic response |
 | POST /auth/login | Return an access token and refresh cookie or `otpRequired` |
 | POST /auth/login/verify | Verify email, password and optional login code |

@@ -113,39 +113,43 @@ test('Google sign-in uses the application origin, PKCE, and validates callback s
 });
 
 test('registration, OTP lifecycle, sessions, RBAC, recovery, FAQ, and Telegram', async () => {
-  const data = { name: 'Test user', email, password };
+  const pendingPassword = 'initial registration password';
+  const data = { name: 'Test user', email, password: pendingPassword };
   assert.equal((await post('/auth/register', data, { Origin: 'https://other.example' })).status, 403);
   assert.equal((await post('/auth/register', data)).status, 202);
   assert.equal((await post('/auth/register', { ...data, email: email.toUpperCase() })).status, 202);
   assert.equal(await db.user.count({ where: { email } }), 1);
   assert.equal((await post('/auth/login', { email, password: 'incorrect' })).status, 401);
-  assert.equal((await post('/auth/login', { email, password })).status, 403);
+  assert.equal((await post('/auth/login', { email, password: pendingPassword })).status, 403);
 
   const user = await db.user.findUniqueOrThrow({ where: { email } });
   const initial = code(email, 'Verify your email');
+  assert.equal((await post('/auth/verify-email', { email, code: initial })).status, 400);
   assert.equal((await post('/auth/resend-verification', { email })).status, 202);
   assert.equal(emailService.readMock(email).length, 1);
   const challenge = { userId_purpose: { userId: user.id, purpose: 'VERIFY_EMAIL' as const } };
   for (let count = 0; count < 5; count++) {
-    assert.equal((await post('/auth/verify-email', { email, code: wrong(initial) })).status, 400);
+    assert.equal((await post('/auth/verify-email', { email, code: wrong(initial), password })).status, 400);
   }
   assert.equal((await db.otpChallenge.findUniqueOrThrow({ where: challenge })).attempts, 5);
-  assert.equal((await post('/auth/verify-email', { email, code: initial })).status, 400);
+  assert.equal((await post('/auth/verify-email', { email, code: initial, password })).status, 400);
   await db.otpChallenge.update({ where: challenge, data: {
     attempts: 0, expiresAt: new Date(0), issuedAt: new Date(0),
   } });
-  assert.equal((await post('/auth/verify-email', { email, code: initial })).status, 400);
+  assert.equal((await post('/auth/verify-email', { email, code: initial, password })).status, 400);
   assert.equal((await post('/auth/resend-verification', { email })).status, 202);
-  const verification = { email, code: code(email, 'Verify your email') };
+  const verification = { email, code: code(email, 'Verify your email'), password };
   const results = await Promise.all([post('/auth/verify-email', verification), post('/auth/verify-email', verification)]);
   assert.deepEqual(results.map(result => result.status).sort(), [200, 400]);
+  assert.equal((await post('/auth/login', { email, password: pendingPassword })).status, 401);
 
   assert.equal((await get('/api/v1/auth/me')).status, 401);
   let session = await loggedIn(email);
   assert.equal((await get('/api/v1/users/me', session.token)).status, 200);
   assert.equal((await get('/api/v1/users', session.token)).status, 403);
 
-  await db.user.create({ data: { name: 'Admin fixture', email: admin, passwordHash: user.passwordHash,
+  const verifiedUser = await db.user.findUniqueOrThrow({ where: { email } });
+  await db.user.create({ data: { name: 'Admin fixture', email: admin, passwordHash: verifiedUser.passwordHash,
     verifiedAt: new Date(), roles: { create: { roleName: 'ADMIN' } } } });
   const adminSession = await loggedIn(admin);
   assert.equal((await get('/api/v1/users', adminSession.token)).status, 200);

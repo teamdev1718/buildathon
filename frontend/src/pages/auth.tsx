@@ -29,7 +29,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         await api('/auth/register', 'POST', { email, password, name: value(form, 'name') });
         return go('/verify-email', email);
       case 'verify':
-        await api('/auth/verify-email', 'POST', { email, code });
+        await api('/auth/verify-email', 'POST', { email, code, password });
         return navigate('/login?verified=1');
       case 'forgot':
         await api('/auth/forgot-password', 'POST', { email });
@@ -68,7 +68,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
     }
   }
 
-  const newPassword = mode === 'register' || mode === 'reset';
+  const newPassword = mode === 'register' || mode === 'reset' || mode === 'verify';
   return <section className="panel auth-panel">
     <h1>{loginStep ? 'Enter your sign-in code' : titles[mode]}</h1>
     {params.has('verified') && <p className="notice" role="status">Email verified. You can now sign in.</p>}
@@ -84,7 +84,8 @@ export function AuthPage({ mode }: { mode: Mode }) {
       {(loginStep || mode === 'verify' || mode === 'reset') && <Field label="Six-digit code" name="code"
         inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} />}
       {(newPassword || mode === 'login' && !loginStep) && <Field
-        label={newPassword ? 'Password (at least 12 characters)' : 'Password'} name="password" type="password"
+        label={mode === 'verify' ? 'Set your password (at least 12 characters)' :
+          newPassword ? 'Password (at least 12 characters)' : 'Password'} name="password" type="password"
         autoComplete={newPassword ? 'new-password' : 'current-password'} minLength={newPassword ? 12 : undefined}
         maxLength={128} />}
     </AsyncForm>

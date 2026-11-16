@@ -2,7 +2,7 @@ import { emailAvailable, env, googleEnabled, telegramEnabled } from '../../confi
 import { route } from '../../lib/api.js';
 import { limiter } from '../../lib/http.js';
 import { currentUser, requireAuth } from '../../middleware/auth.js';
-import { emailInput, loginInput, loginOtpInput, otpInput, registration, resetInput } from './auth.schema.js';
+import { emailInput, loginInput, loginOtpInput, registration, resetInput, verifyEmailInput } from './auth.schema.js';
 import { completeLogin, login, register, requestCode, resetPassword, verifyEmail } from './auth.service.js';
 import { beginGoogle, finishGoogle } from './google.service.js';
 import { cookie, logout, refresh, sendSession } from './session.service.js';
@@ -28,8 +28,8 @@ route({ method: 'post', path: '/auth/logout', summary: 'Revoke the cookie sessio
   (_input, req, res) => logout(req.cookies[cookie], res));
 route({ method: 'get', path: '/auth/me', summary: 'Get current identity and grants', protected: true,
   middleware: [requireAuth] }, (_input, req) => currentUser(req));
-route({ method: 'post', path: '/auth/verify-email', body: otpInput, middleware: authLimit,
-  summary: 'Consume the email verification code' }, verifyEmail);
+route({ method: 'post', path: '/auth/verify-email', body: verifyEmailInput, middleware: authLimit,
+  summary: 'Consume the email verification code and set the account password' }, verifyEmail);
 route({ method: 'post', path: '/auth/resend-verification', body: emailInput, middleware: authLimit,
   status: 202, summary: 'Request another verification code after the cooldown' },
 ({ email }) => requestCode(email, 'VERIFY_EMAIL'));
