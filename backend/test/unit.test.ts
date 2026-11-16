@@ -68,18 +68,22 @@ test('production configuration accepts a trailing slash and identifies invalid s
 
 test('Google sign-in reuses the Gmail OAuth pair unless a dedicated client is configured', () => {
   const read = (overrides: NodeJS.ProcessEnv) => readConfig(
-    '[googleEnabled, env.GOOGLE_CLIENT_ID].join(":")', {
-      GOOGLE_CALLBACK_URL: 'http://localhost:5173/api/v1/auth/google/callback',
+    'JSON.stringify([googleEnabled, env.GOOGLE_CLIENT_ID, env.GOOGLE_CALLBACK_URL])', {
+      ENABLE_GOOGLE_AUTH: '',
       GMAIL_CLIENT_ID: 'gmail-client', GMAIL_CLIENT_SECRET: 'gmail-secret', ...overrides,
     },
   );
   const shared = read({});
   assert.equal(shared.status, 0, shared.stderr);
-  assert.equal(shared.stdout.trim(), 'true:gmail-client');
-  assert.equal(read({ GOOGLE_CLIENT_ID: 'login-client' }).stdout.trim(), 'false:login-client');
-  assert.equal(read({ GOOGLE_CLIENT_ID: 'login-client', GOOGLE_CLIENT_SECRET: 'login-secret' })
-    .stdout.trim(), 'true:login-client');
-  assert.equal(read({ ENABLE_GOOGLE_AUTH: 'false' }).stdout.trim(), 'false:gmail-client');
+  assert.deepEqual(JSON.parse(shared.stdout), [
+    true, 'gmail-client', 'http://localhost:5173/api/v1/auth/google/callback',
+  ]);
+  assert.deepEqual(JSON.parse(read({ GOOGLE_CLIENT_ID: 'login-client', ENABLE_GOOGLE_AUTH: 'true' }).stdout)
+    .slice(0, 2), [false, 'login-client']);
+  assert.deepEqual(JSON.parse(read({ GOOGLE_CLIENT_ID: 'login-client', GOOGLE_CLIENT_SECRET: 'login-secret',
+    ENABLE_GOOGLE_AUTH: 'true' }).stdout).slice(0, 2), [true, 'login-client']);
+  assert.equal(JSON.parse(read({ ENABLE_GOOGLE_AUTH: 'false' }).stdout)[0], false);
+  assert.equal(JSON.parse(read({ GOOGLE_CALLBACK_URL: 'https://old.example/callback' }).stdout)[0], true);
 });
 
 test('FAQ works without a provider and validates message length', () => {

@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const flag = z.enum(['true', 'false']).default('false').transform(value => value === 'true');
+const booleanFlag = z.enum(['true', 'false']).transform(value => value === 'true');
+const flag = booleanFlag.prefault('false');
 const optional = z.string().optional();
 const postgres = z.url({ protocol: /^postgres(?:ql)?$/ });
 const parsed = z.object({
@@ -21,10 +22,9 @@ const parsed = z.object({
   GMAIL_CLIENT_ID: optional,
   GMAIL_CLIENT_SECRET: optional,
   GMAIL_REFRESH_TOKEN: optional,
-  ENABLE_GOOGLE_AUTH: flag,
+  ENABLE_GOOGLE_AUTH: booleanFlag.optional(),
   GOOGLE_CLIENT_ID: optional,
   GOOGLE_CLIENT_SECRET: optional,
-  GOOGLE_CALLBACK_URL: optional,
   ENABLE_TELEGRAM: flag,
   TELEGRAM_BOT_TOKEN: optional,
   TELEGRAM_WEBHOOK_SECRET: optional,
@@ -47,8 +47,11 @@ const reuseGmailClient = !settings.GOOGLE_CLIENT_ID && !settings.GOOGLE_CLIENT_S
 export const env = {
   ...settings,
   APP_ORIGIN: appOrigin,
+  ENABLE_GOOGLE_AUTH: settings.ENABLE_GOOGLE_AUTH ?? Boolean(
+    reuseGmailClient && settings.GMAIL_CLIENT_ID && settings.GMAIL_CLIENT_SECRET),
   GOOGLE_CLIENT_ID: reuseGmailClient ? settings.GMAIL_CLIENT_ID : settings.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: reuseGmailClient ? settings.GMAIL_CLIENT_SECRET : settings.GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL: appOrigin + '/api/v1/auth/google/callback',
 };
 export const production = env.NODE_ENV === 'production';
 if (production && !env.APP_ORIGIN.startsWith('https://')) {
@@ -61,7 +64,7 @@ if (production && env.EMAIL_PROVIDER === 'mock') {
   throw new Error('EMAIL_PROVIDER must be gmail or disabled in production.');
 }
 export const googleEnabled = Boolean(env.ENABLE_GOOGLE_AUTH && env.GOOGLE_CLIENT_ID &&
-  env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CALLBACK_URL === env.APP_ORIGIN + '/api/v1/auth/google/callback');
+  env.GOOGLE_CLIENT_SECRET);
 export const telegramEnabled = Boolean(env.ENABLE_TELEGRAM && env.TELEGRAM_BOT_TOKEN &&
   /^[A-Za-z0-9_-]{16,256}$/.test(env.TELEGRAM_WEBHOOK_SECRET ?? '') &&
   /^[A-Za-z0-9_]{5,32}$/.test(env.TELEGRAM_BOT_USERNAME ?? ''));

@@ -16,7 +16,6 @@ Object.assign(process.env, {
   JWT_SECRET: 'test-jwt-'.repeat(5), OTP_SECRET: 'test-otp-'.repeat(5), EMAIL_PROVIDER: 'mock',
   CHATBOT_PROVIDER: 'faq', ENABLE_LOGIN_OTP: 'true', ENABLE_GOOGLE_AUTH: 'true',
   GOOGLE_CLIENT_ID: 'test-client.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'test-only',
-  GOOGLE_CALLBACK_URL: appOrigin + '/api/v1/auth/google/callback',
   ENABLE_TELEGRAM: 'true', TELEGRAM_BOT_TOKEN: 'fake-token',
   TELEGRAM_BOT_USERNAME: 'fake_bot', TELEGRAM_WEBHOOK_SECRET: 'fake_webhook_secret',
 });

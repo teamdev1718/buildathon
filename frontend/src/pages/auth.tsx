@@ -92,8 +92,9 @@ export function AuthPage({ mode }: { mode: Mode }) {
       {mode === 'verify' && <button type="button" className="secondary" disabled={!address || resendBusy}
         onClick={() => void resend()}>{resendBusy ? 'Requesting…' : 'Request another code'}</button>}
       {resendStatus && <p className="notice" role="status">{resendStatus}</p>}
+      {features?.google && (mode === 'register' || mode === 'login' && !loginStep) &&
+        <a className="button secondary" href="/api/v1/auth/google">Continue with Google</a>}
       {mode === 'login' && !loginStep && <>
-        {features?.google && <a className="button secondary" href="/api/v1/auth/google">Continue with Google</a>}
         <Link to="/forgot-password">Forgot password?</Link>
         <Link to="/verify-email">Verify email</Link>
         <Link to="/register">Create an account</Link>

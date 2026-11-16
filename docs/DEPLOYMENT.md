@@ -32,7 +32,7 @@ Set these environment variables in Render:
 | `JWT_SECRET`, `OTP_SECRET` | Separate random secrets of at least 32 characters |
 | `EMAIL_PROVIDER`, `EMAIL_FROM`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` | `gmail`, sender mailbox address, and Gmail OAuth credentials |
 | `ENABLE_LOGIN_OTP` | `false` by default. Set `true` for an email code after password login |
-| `ENABLE_GOOGLE_AUTH`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | See Google section |
+| `ENABLE_GOOGLE_AUTH`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional settings for Google sign-in. See Google section |
 | `ENABLE_TELEGRAM`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | See Telegram section |
 | `CHATBOT_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | FAQ is the default. See Gemini section |
 
@@ -54,7 +54,9 @@ Gmail accepts MIME messages over HTTPS. The service avoids automatic replay of a
 
 Use the Gmail **Web application** OAuth client or create a separate Web application client for sign-in. On the client you use, register exactly `https://your-service.onrender.com/api/v1/auth/google/callback` under **Authorized redirect URIs**. If you are using the Gmail client, add it alongside the Playground redirect. For Vite development add `http://localhost:5173/api/v1/auth/google/callback`.
 
-Set `ENABLE_GOOGLE_AUTH=true` and set `GOOGLE_CALLBACK_URL` to the exact callback. Leave both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` blank to reuse the Gmail OAuth client. Set both to use a dedicated sign-in client. The sign-in flow requests only `openid`, `email`, and `profile`, and keeps the Gmail refresh token in the email provider. Google sign-in uses PKCE, state, nonce, and a verified email claim. When a password account already uses the address, sign in with its existing method. The starter creates new Google accounts and reuses them by Google subject. [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect)
+The app derives the callback from `APP_ORIGIN`. With a configured Gmail OAuth client, sign-in is enabled by default when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are blank. Set both and `ENABLE_GOOGLE_AUTH=true` to use a dedicated sign-in client. Set `ENABLE_GOOGLE_AUTH=false` to disable sign-in with either client. Visit `/api/v1/auth/features` to check whether the login and registration pages should show the Google button.
+
+The sign-in flow requests only `openid`, `email`, and `profile`, and keeps the Gmail refresh token in the email provider. Google sign-in uses PKCE, state, nonce, and a verified email claim. When a password account already uses the address, sign in with its existing method. The starter creates new Google accounts and reuses them by Google subject. [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect)
 
 ## Telegram
 
