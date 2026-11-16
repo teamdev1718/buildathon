@@ -1,5 +1,6 @@
 import { env, emailAvailable } from '../../config/env.js';
 import { ApiError, log } from '../../lib/http.js';
+import { createGmailProvider } from './gmail.provider.js';
 
 const escape = (value: string) => value.replace(/[&<>"']/g, character =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character);
@@ -14,13 +15,18 @@ const templates = {
 type Email = { to: string; subject: string; template: keyof typeof templates; data: string; key: string };
 type MockEmail = { to: string; subject: string; text: string };
 const mailbox: MockEmail[] = [];
+const gmail = env.EMAIL_PROVIDER === 'gmail' && emailAvailable &&
+  env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN && env.EMAIL_FROM
+  ? createGmailProvider({ clientId: env.GMAIL_CLIENT_ID, clientSecret: env.GMAIL_CLIENT_SECRET,
+      refreshToken: env.GMAIL_REFRESH_TOKEN, from: env.EMAIL_FROM })
+  : undefined;
 
 export const emailService = {
   readMock(to: string) {
     return mailbox.filter(message => message.to === to);
   },
 
-  async send({ to, subject, template, data, key }: Email) {
+  async send({ to, subject, template, data }: Email) {
     if (!emailAvailable) throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Email delivery is unavailable.');
     const text = templates[template](data);
     if (env.EMAIL_PROVIDER === 'mock') {
@@ -28,24 +34,15 @@ export const emailService = {
       if (mailbox.length > 100) mailbox.shift();
       return { status: 'MOCKED' as const };
     }
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json',
-            'Idempotency-Key': key },
-          body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text, html: '<p>' + escape(text) + '</p>' }),
-          signal: AbortSignal.timeout(4000),
-        });
-        await response.body?.cancel();
-        if (response.ok) return { status: 'ACCEPTED' as const };
-        if (response.status < 500) break;
-      } catch {
-        // Safe retry with the same Resend idempotency key.
-      }
+    if (!gmail) throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Email delivery is unavailable.');
+    try {
+      await gmail.send({ to, subject, text, html: '<p>' + escape(text) + '</p>' });
+      return { status: 'ACCEPTED' as const };
+    } catch {
+      // An ambiguous Gmail send failure can still mean the message was accepted.
+      log('email.failed', { template });
+      throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Email delivery is temporarily unavailable.');
     }
-    log('email.failed', { template });
-    throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Email delivery is temporarily unavailable.');
   },
 };
 

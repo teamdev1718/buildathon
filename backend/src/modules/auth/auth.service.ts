@@ -46,7 +46,7 @@ export async function requestCode(email: string, purpose: 'VERIFY_EMAIL' | 'RESE
       await issueOtp(user, purpose);
     }
   };
-  // Keep account lookup and Resend latency out of the public response.
+  // Keep account lookup and email delivery latency out of the public response.
   if (env.EMAIL_PROVIDER === 'mock') await dispatch();
   else void dispatch().catch(() => log('auth.code_dispatch_failed', { purpose }));
   return accepted;

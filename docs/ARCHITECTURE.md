@@ -10,7 +10,7 @@ Production cookies are secure, host-only, HttpOnly, and SameSite=Lax. Mutating A
 
 Notifications reserve a unique database key before calling the provider. Records distinguish mock, provider acceptance, failure, and pending status. An interrupted send may leave pending status and requires review before a deliberate retry. Telegram webhook updates are claimed transactionally before replying. This provides at-most-once dispatch across webhook and notification retries. Extend with an outbox if you need durable delivery and reconciliation.
 
-Recovery and resend requests acknowledge before looking up the account or waiting for Resend. Delivery is retriable via the code request flow if the process stops before sending.
+Recovery and resend requests acknowledge before looking up the account or waiting for the email provider. Delivery is retriable via the code request flow if the process stops before sending.
 
 FAQ entries are local code. The optional Gemini path sends only the bounded question and the public FAQ instructions. It has no application tools or database access. Model text is rendered as plain text. In-process rate limits suit a single demo instance. Use a shared store if deploying multiple instances, and review provider quotas and data retention before expanding traffic.
 

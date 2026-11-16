@@ -14,5 +14,5 @@ Verified locally on Windows with Node 24.18.0 and a disposable PostgreSQL 17 ins
 | Compiled backend entry point | Started and returned ready with the migrated database |
 | Chromium over local HTTPS | Direct dashboard visit, registration, email verification, ordinary password login, secure HttpOnly refresh cookie, rotation after reload, FAQ, logout, and password reset passed. Resend requests used a local test stub |
 
-Live validation requires an existing Render service and the intended Supabase database. Real Resend delivery, Google's authorization-code exchange and successful callback, Telegram API delivery, and Gemini calls remain unverified. Use the steps in [Deployment](DEPLOYMENT.md) on the actual HTTPS origin before tagging the competition baseline. The GitHub Actions workflow is configured and awaits a run in the GitHub repository.
+Live validation requires an existing Render service and the intended Supabase database. The Gmail replacement has mocked HTTPS provider tests. Real Gmail delivery, Google's sign-in authorization-code exchange and successful callback, Telegram API delivery, and Gemini calls require live verification. Use the steps in [Deployment](DEPLOYMENT.md) on the actual HTTPS origin before tagging the competition baseline.
 

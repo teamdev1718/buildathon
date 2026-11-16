@@ -14,10 +14,13 @@ const parsed = z.object({
   JWT_SECRET: z.string().min(32),
   OTP_SECRET: z.string().min(32),
   ENABLE_LOGIN_OTP: flag,
-  EMAIL_PROVIDER: z.enum(['resend', 'mock', 'disabled']).default('disabled'),
+  EMAIL_PROVIDER: z.enum(['gmail', 'mock', 'disabled', 'resend']).default('disabled')
+    .transform(value => value === 'resend' ? 'disabled' : value),
   MOCK_INBOX_KEY: z.string().min(32).optional(),
-  RESEND_API_KEY: optional,
   EMAIL_FROM: optional,
+  GMAIL_CLIENT_ID: optional,
+  GMAIL_CLIENT_SECRET: optional,
+  GMAIL_REFRESH_TOKEN: optional,
   ENABLE_GOOGLE_AUTH: flag,
   GOOGLE_CLIENT_ID: optional,
   GOOGLE_CLIENT_SECRET: optional,
@@ -48,5 +51,6 @@ export const telegramEnabled = Boolean(env.ENABLE_TELEGRAM && env.TELEGRAM_BOT_T
   /^[A-Za-z0-9_-]{16,256}$/.test(env.TELEGRAM_WEBHOOK_SECRET ?? '') &&
   /^[A-Za-z0-9_]{5,32}$/.test(env.TELEGRAM_BOT_USERNAME ?? ''));
 export const emailAvailable = env.EMAIL_PROVIDER === 'mock' ||
-  Boolean(env.EMAIL_PROVIDER === 'resend' && env.RESEND_API_KEY && env.EMAIL_FROM);
+  Boolean(env.EMAIL_PROVIDER === 'gmail' && env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET &&
+    env.GMAIL_REFRESH_TOKEN && !/[\r\n]/.test(env.EMAIL_FROM ?? '') && z.email().safeParse(env.EMAIL_FROM).success);
 

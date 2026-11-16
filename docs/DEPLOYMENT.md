@@ -30,7 +30,7 @@ Set these environment variables in Render:
 | `TRUST_PROXY_HOPS` | `1` for the direct Render proxy configuration. Reassess when a different proxy chain is added |
 | `DATABASE_URL`, `DIRECT_URL` | Supabase session/runtime and migration URIs above |
 | `JWT_SECRET`, `OTP_SECRET` | Separate random secrets of at least 32 characters |
-| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, API key, and sender address |
+| `EMAIL_PROVIDER`, `EMAIL_FROM`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` | `gmail`, sender mailbox address, and Gmail OAuth credentials |
 | `ENABLE_LOGIN_OTP` | `false` by default. Set `true` for an email code after password login |
 | `ENABLE_GOOGLE_AUTH`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | See Google section |
 | `ENABLE_TELEGRAM`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | See Telegram section |
@@ -38,9 +38,17 @@ Set these environment variables in Render:
 
 Render injects `PORT`. The frontend needs no deployed environment variables. A push runs GitHub Actions and may trigger a Render deployment separately. Configure Render **After CI Checks Pass** if you want CI to gate automatic deployment.
 
-## Resend
+## Gmail API email delivery
 
-Verify a sending domain with Resend and set `EMAIL_FROM` to a verified sender on that domain. Set `EMAIL_PROVIDER=resend` and supply a sending API key. Submit registration and password reset with an address you can check. Verify delivery and complete both flows. Missing provider configuration produces an explicit 503 for email-dependent requests. The API uses HTTPS and a stable idempotency key for retries. [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email)
+Use a Gmail mailbox you control as the sender. The app can remain on its Render subdomain. The mailbox owner grants the backend send access once. Recipients need no Google authorization to receive emails.
+
+1. Enable **Gmail API** in the Google Cloud project for your sender. Set up Google Auth Platform and create a **Web application** OAuth client for sending. Keep these credentials separate from the app's Google sign-in client. Add `https://developers.google.com/oauthplayground` to this client's **Authorized redirect URIs**.
+2. Open [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/). In the settings gear, select **Use your own OAuth credentials** and enter the Gmail sender client's ID and secret. Use **Access type → Offline**.
+3. Enter the custom scope `https://www.googleapis.com/auth/gmail.send`, click **Authorize APIs**, and sign in as the sender mailbox. Exchange the authorization code for tokens and copy the **refresh token**. If the OAuth app is in External Testing, add the sender to **Audience → Test users**. Refresh tokens for this scope expire after seven days in External Testing. Set up the appropriate publishing and verification status for ongoing deployment. [Google OAuth token expiration](https://developers.google.com/identity/protocols/oauth2#expiration)
+4. In Render, set `EMAIL_PROVIDER=gmail`, `EMAIL_FROM` to the exact mailbox address, and add `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN`. Remove the obsolete `RESEND_API_KEY` if present, save, and redeploy. A deployment still configured with the old email provider setting starts with email disabled until switched to Gmail.
+5. Register with an inbox you can check and complete email verification and password reset. Check the Gmail sender and recipient inboxes during live testing.
+
+Gmail accepts MIME messages over HTTPS. The service avoids automatic replay of a failed send because Gmail may have already accepted the message. Ask for a fresh code after a delivery failure. Missing provider configuration returns a 503 for email-dependent requests. [Gmail send endpoint](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/send)
 
 ## Google OAuth
 
