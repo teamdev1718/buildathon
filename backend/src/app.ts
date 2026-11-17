@@ -17,6 +17,11 @@ import './modules/chatbot/chatbot.routes.js';
 import './modules/telegram/telegram.routes.js';
 import './modules/mahallus/mahallus.routes.js';
 import './modules/programs/programs.routes.js';
+import './modules/programs/payments.routes.js';
+import './modules/volunteers/volunteers.routes.js';
+import './modules/tracking/tracking.routes.js';
+import './modules/expenses/expenses.routes.js';
+import './modules/programs/dashboard.routes.js';
 import './modules/udhiyya/cycles.routes.js';
 import './modules/udhiyya/enrollments.routes.js';
 import './modules/udhiyya/distribution.routes.js';
@@ -24,8 +29,15 @@ import './modules/udhiyya/distribution.routes.js';
 export const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', env.TRUST_PROXY_HOPS);
+// Razorpay's checkout script, frame and API calls are the only third-party origins the app talks to.
 app.use(requestLog, helmet({ strictTransportSecurity: production ? undefined : false,
-  contentSecurityPolicy: { directives: { upgradeInsecureRequests: production ? [] : null } } }));
+  contentSecurityPolicy: { directives: {
+    upgradeInsecureRequests: production ? [] : null,
+    scriptSrc: ["'self'", 'https://checkout.razorpay.com'],
+    frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+    connectSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com', 'https://lumberjack.razorpay.com'],
+    imgSrc: ["'self'", 'data:', 'https://*.razorpay.com'],
+  } } }));
 app.get(['/health', '/api/health'], (_req, res) => res.json({ status: 'ok' }));
 app.get(['/ready', '/api/ready'], async (_req, res) => {
   try {
@@ -61,12 +73,12 @@ if (env.NODE_ENV === 'development' && env.EMAIL_PROVIDER === 'mock' && env.MOCK_
 app.use('/api/v1', limiter(240, 60_000), (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-      req.path !== '/integrations/telegram/webhook' &&
+      req.path !== '/integrations/telegram/webhook' && req.path !== '/integrations/razorpay/webhook' &&
       (req.get('origin') !== env.APP_ORIGIN || !req.is('application/json'))) {
     return next(new ApiError(403, 'ORIGIN_DENIED', 'Send JSON from the application origin.'));
   }
   next();
-}, express.json({ limit: '32kb' }), cookieParser(), api);
+}, express.json({ limit: '32kb', verify: (req, _res, buf) => { (req as { rawBody?: Buffer }).rawBody = buf; } }), cookieParser(), api);
 app.use('/api', (_req, _res, next) => next(new ApiError(404, 'NOT_FOUND', 'API route not found.')));
 
 export const frontendDist = fileURLToPath(new URL('../../frontend/dist/', import.meta.url));

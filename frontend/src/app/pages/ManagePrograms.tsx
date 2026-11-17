@@ -13,7 +13,7 @@ function Create({ mahalluId, done, close }: { mahalluId: string; done(id: string
   return <Modal title={<>New <span className="serif">program</span></>} onClose={close}>
     <form onSubmit={submit(async data => {
       const created = await api<Program>(`/mahallus/${mahalluId}/programs`, 'POST', { name: form(data, 'name'), year: Number(form(data, 'year')),
-        targetDate: form(data, 'targetDate'), ...(form(data, 'description') && { description: form(data, 'description') }) }, true);
+        targetDate: form(data, 'targetDate'), ...(form(data, 'payByDate') && { payByDate: form(data, 'payByDate') }), ...(form(data, 'description') && { description: form(data, 'description') }) }, true);
       done(created.id);
     })}>
       <Field label="Program name" name="name" required maxLength={80} defaultValue={`Udhiyya ${year}`} />
@@ -21,6 +21,7 @@ function Create({ mahalluId, done, close }: { mahalluId: string; done(id: string
         <Field label="Year" name="year" type="number" min={2024} max={2100} required defaultValue={year} />
         <Field label="Udhiyya date (Eid al-Adha)" name="targetDate" type="date" required />
       </div>
+      <Field label="Everyone pays in full by (optional)" name="payByDate" type="date" required={false} hint="Defaults to one week before Udhiyya. Installments are spread up to this date." />
       <Field label="Note for members (optional)" name="description" maxLength={500} required={false} />
       {error && <p className="am-error" role="alert">{error}</p>}
       <button className="pillbtn" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create program'}</button>

@@ -1,13 +1,12 @@
 import { randomInt } from 'node:crypto';
 import type { z } from 'zod';
-import { db } from '../../lib/db.js';
+import { db, runSerializable } from '../../lib/db.js';
 import { ApiError } from '../../lib/http.js';
 import { assertMahalluAdmin } from '../mahallus/mahallus.service.js';
 import { animalCode, animalTypes, planAllocation, shuffle, slotAt } from './programs.logic.js';
 import type { allocationInput, drawInput } from './programs.schema.js';
 
 type Actor = { id: string; permissions: string[] };
-const serializable = { isolationLevel: 'Serializable' as const };
 
 async function adminProgram(actor: Actor, programId: string) {
   const program = await db.program.findUnique({ where: { id: programId }, include: { animals: true } });
@@ -25,7 +24,7 @@ export const allocationService = {
   async allocate(actor: Actor, programId: string) {
     const program = await adminProgram(actor, programId);
     requireOpen(program.status);
-    await db.$transaction(async tx => {
+    await runSerializable(async tx => {
       const bookings = await tx.booking.findMany({ where: { programId }, orderBy: { createdAt: 'asc' } });
       await tx.slaughterAnimal.deleteMany({ where: { programId } });
       for (const type of animalTypes) {
@@ -33,15 +32,14 @@ export const allocationService = {
         const mine = bookings.filter(item => item.animalType === type);
         if (!setting || !mine.length) continue;
         const plan = planAllocation(mine.map(item => ({ id: item.id, shares: item.shares })), setting.sharesPerAnimal);
-        const created: { id: string }[] = [];
-        for (let index = 0; index < plan.animals; index++) {
-          created.push(await tx.slaughterAnimal.create({ data: { programId, animalType: type, code: animalCode(type, index + 1) } }));
-        }
+        const created = await tx.slaughterAnimal.createManyAndReturn({ select: { id: true, code: true },
+          data: Array.from({ length: plan.animals }, (_, index) => ({ programId, animalType: type, code: animalCode(type, index + 1) })) });
+        created.sort((a, b) => a.code.localeCompare(b.code));
         await tx.shareAllocation.createMany({ data: plan.placements.map(item => ({
           animalId: created[item.animal].id, bookingId: item.bookingId, shares: item.shares })) });
       }
       await tx.program.update({ where: { id: programId }, data: { allocatedAt: new Date(), drawStartAt: null, drawMinutes: null } });
-    }, serializable);
+    });
     return allocationService.view(actor, programId);
   },
 
@@ -55,7 +53,7 @@ export const allocationService = {
     ]);
     const capacity = new Map(program.animals.map(item => [item.animalType, item.sharesPerAnimal]));
     const rows = animals.map(animal => ({
-      id: animal.id, code: animal.code,
+      id: animal.id, code: animal.code, status: animal.status,
       animalType: animal.animalType, capacity: capacity.get(animal.animalType) ?? 1, drawOrder: animal.drawOrder, slotAt: animal.slotAt,
       filled: animal.allocations.reduce((sum, item) => sum + item.shares, 0),
       holders: animal.allocations.map(item => ({ bookingId: item.bookingId, shares: item.shares, ...item.booking.household }))
@@ -86,7 +84,7 @@ export const allocationService = {
     if (input.items.reduce((sum, item) => sum + item.shares, 0) > booking.shares) {
       throw new ApiError(409, 'TOO_MANY_SHARES', 'That is more shares than this household booked.');
     }
-    await db.$transaction(async tx => {
+    await runSerializable(async tx => {
       const animals = await tx.slaughterAnimal.findMany({ where: { id: { in: ids }, programId: booking.programId, animalType: booking.animalType } });
       if (animals.length !== ids.length) throw new ApiError(404, 'NOT_FOUND', 'Choose animals of the same type from this program.');
       const capacity = booking.program.animals.find(item => item.animalType === booking.animalType)!.sharesPerAnimal;
@@ -99,7 +97,7 @@ export const allocationService = {
       }
       await tx.shareAllocation.deleteMany({ where: { bookingId } });
       await tx.shareAllocation.createMany({ data: input.items.map(item => ({ bookingId, animalId: item.animalId, shares: item.shares })) });
-    }, serializable);
+    });
     return allocationService.view(actor, booking.programId);
   },
 

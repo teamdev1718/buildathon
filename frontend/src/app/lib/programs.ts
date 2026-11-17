@@ -3,7 +3,7 @@ export type PayMode = 'ONE_TIME' | 'INSTALLMENTS';
 export type Animal = { animalType: AnimalType; price: number; enabled: boolean; sharesPerAnimal: number; sharePrice: number };
 export type Program = {
   id: string; mahalluId: string; name: string; year: number; targetDate: string; description: string | null;
-  status: 'DRAFT' | 'OPEN' | 'ENDED'; animals: Animal[];
+  status: 'DRAFT' | 'OPEN' | 'ENDED'; payBy: string; payByCustom: boolean; animals: Animal[];
 };
 
 export const inr = (amount: number) => '₹' + amount.toLocaleString('en-IN');

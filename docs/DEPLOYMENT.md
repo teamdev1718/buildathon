@@ -34,9 +34,14 @@ Set these environment variables in Render:
 | `ENABLE_LOGIN_OTP` | `false` by default. Set `true` for an email code after password login |
 | `ENABLE_GOOGLE_AUTH`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional settings for Google sign-in. See Google section |
 | `ENABLE_TELEGRAM`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | See Telegram section |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Optional. See Razorpay section. Online payments stay off until the key pair is set |
 | `CHATBOT_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | FAQ is the default. See Gemini section |
 
 Render injects `PORT`. The frontend needs no deployed environment variables. A push runs GitHub Actions and may trigger a Render deployment separately. Configure Render **After CI Checks Pass** if you want CI to gate automatic deployment.
+
+## Razorpay payments
+
+Start in test mode. In the Razorpay dashboard create an API key pair and set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. Keep the secret on the server only. For reliable confirmation when a member closes the browser mid-payment, add a webhook in **Settings, Webhooks** that points to `https://your-service.onrender.com/api/v1/integrations/razorpay/webhook`, subscribe to `payment.captured` and `order.paid`, and set the same secret as `RAZORPAY_WEBHOOK_SECRET`. A payment only counts as paid after the checkout signature or a signed webhook is verified. Pay with Razorpay's test cards or UPI test handles, then check the admin Payments card. Switch to live keys after Razorpay approves the account. Autopay in this release is a monthly reminder with a pay link, not an automatic debit. Automatic debits need Razorpay Subscriptions or e-mandates enabled on the account. [Razorpay payment gateway docs](https://razorpay.com/docs/payments/)
 
 ## Gmail API email delivery
 

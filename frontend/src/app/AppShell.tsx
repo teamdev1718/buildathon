@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth';
 import { greeting, initials, useApp } from './lib/app-context';
-import { IconBack, IconBell, IconChevronRight, IconCompass, IconDoc, IconHeart, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
+import { IconBack, IconBell, IconCard, IconChart, IconChevronRight, IconClock, IconHand, IconCompass, IconDoc, IconHeart, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
 import './app.css';
 import './app-extra.css';
 
@@ -21,24 +21,28 @@ function useWide() {
 }
 
 function useItems(): Item[] {
-  const { isSuper, adminOf, ctx } = useApp();
+  const { isSuper, adminOf, ctx, volunteer } = useApp();
   const member = (ctx?.households.length ?? 0) > 0;
   const items: Item[] = [{ to: '/app', label: 'Home', icon: <IconHome />, end: true }];
   if (isSuper) items.push({ to: '/app/mahallus', label: 'Mahallus', icon: <IconShield /> });
   if (adminOf.length) items.push({ to: '/app/members', label: 'Members', icon: <IconUsers /> });
+  if (volunteer?.canStatus) items.push({ to: '/app/volunteer/animals', label: 'Animals', icon: <IconChart /> });
+  if (volunteer?.canDistribute) items.push({ to: '/app/volunteer/distribute', label: 'Distribute', icon: <IconHand /> });
   if (adminOf.length) items.push({ to: '/app/manage/programs', label: member ? 'Manage programs' : 'Programs', icon: <IconDoc /> });
-  if (member) items.push({ to: '/app/programs', label: 'Programs', icon: <IconHeart /> });
-  items.push({ to: '/app/join', label: 'My Mahallu', icon: <IconCompass /> });
+  if (member) items.push({ to: '/app/programs', label: 'Programs', icon: <IconHeart /> }, { to: '/app/tracking', label: 'Tracking', icon: <IconClock /> },
+    { to: '/app/payments', label: 'Payments', icon: <IconCard /> });
+  if (adminOf.length) items.push({ to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> });
+  if (!volunteer) items.push({ to: '/app/join', label: 'My Mahallu', icon: <IconCompass /> });
   return items;
 }
 
-function roleLabel(isSuper: boolean, admin: boolean) {
-  return isSuper ? 'Super admin' : admin ? 'Mahallu admin' : 'Member';
+function roleLabel(isSuper: boolean, admin: boolean, volunteer = false) {
+  return isSuper ? 'Super admin' : admin ? 'Mahallu admin' : volunteer ? 'Volunteer' : 'Member';
 }
 
 function Desktop({ items }: { items: Item[] }) {
   const { user, signOut } = useAuth();
-  const { isSuper, adminOf, activeMahallu, ctx } = useApp();
+  const { isSuper, adminOf, activeMahallu, ctx, volunteer, unread } = useApp();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
@@ -49,7 +53,7 @@ function Desktop({ items }: { items: Item[] }) {
     return () => window.removeEventListener('keydown', close);
   }, []);
   if (!user) return null;
-  const place = activeMahallu?.mahalluName ?? ctx?.households[0]?.mahalluName ?? 'No mahallu yet';
+  const place = activeMahallu?.mahalluName ?? volunteer?.mahalluName ?? ctx?.households[0]?.mahalluName ?? 'No mahallu yet';
   return <div className="shell-desktop" id="shell-desktop">
     <div className="marquee" aria-hidden="true"><span className="track">{'SAVE · PAY · SHARE · DISTRIBUTE · '.repeat(8)}</span></div>
     <header className="dnav">
@@ -60,7 +64,8 @@ function Desktop({ items }: { items: Item[] }) {
         {items.map(item => <NavLink key={item.to} to={item.to} end={item.end}
           className={({ isActive }) => (isActive ? 'on' : '')}>{item.label}</NavLink>)}
       </nav>
-      <button type="button" className="iconbtn" aria-label="Notifications" id="d-bell"><IconBell /></button>
+      <button type="button" className="iconbtn" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} id="d-bell"
+        onClick={() => navigate('/app/notifications')}><IconBell />{unread > 0 && <span className="badge">{unread}</span>}</button>
       <button type="button" className="loginlink" onClick={async () => { await signOut(); navigate('/login'); }}>Sign out</button>
       <span className="avatar sm" aria-hidden="true">{initials(user.name)}</span>
     </header>
@@ -74,7 +79,7 @@ function Desktop({ items }: { items: Item[] }) {
         </div>
         <div className="dside-user">
           <span className="avatar" aria-hidden="true">{initials(user.name)}</span>
-          <div className="grow"><div className="n">{user.name}</div><div className="m">{roleLabel(isSuper, adminOf.length > 0)} • {place}</div></div>
+          <div className="grow"><div className="n">{user.name}</div><div className="m">{roleLabel(isSuper, adminOf.length > 0, !!volunteer)} • {place}</div></div>
           <span className="tag">Verified</span>
         </div>
         <nav className="dside-nav" aria-label="Sections">
@@ -86,13 +91,13 @@ function Desktop({ items }: { items: Item[] }) {
 
     <div className="dwrap"><main id="d-main" tabIndex={-1} aria-label="Content"><Outlet /></main></div>
     <footer className="foot"><div className="divider" /><p><strong style={{ color: 'var(--ink2)' }}>UDHIYYA SAVER</strong> — Udhiyya,
-      made <span className="serif" style={{ fontSize: 15 }}>easier</span> one month at a time. Funds are held by your mahallu committee.</p></footer>
+      made <span className="serif" style={{ fontSize: 15 }}>easier</span> one month at a time. Funds are held by your mahallu committee. <Link to="/transparency">See the public ledger</Link>.</p></footer>
   </div>;
 }
 
 function Mobile({ items }: { items: Item[] }) {
   const { user, signOut } = useAuth();
-  const { isSuper, adminOf } = useApp();
+  const { isSuper, adminOf, volunteer, unread } = useApp();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [more, setMore] = useState(false);
@@ -104,7 +109,8 @@ function Mobile({ items }: { items: Item[] }) {
     <header className="mhead"><div className="row">
       <span className="avatar" aria-hidden="true">{initials(user.name)}</span>
       <div style={{ flex: 1, minWidth: 0 }}><div className="greet">{greeting()}</div><div className="name">{user.name}</div></div>
-      <button type="button" className="iconbtn" aria-label="Notifications"><IconBell /></button>
+      <button type="button" className="iconbtn" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+        onClick={() => navigate('/app/notifications')}><IconBell />{unread > 0 && <span className="badge">{unread}</span>}</button>
     </div></header>
     <main id="m-main" tabIndex={-1} aria-label="Content"><div className="mwrap"><Outlet /></div></main>
     <nav className="mtabs" aria-label="App">
@@ -116,7 +122,7 @@ function Mobile({ items }: { items: Item[] }) {
       <div className="msheet-head">
         <button type="button" className="iconbtn" style={{ background: '#fff' }} onClick={() => setMore(false)} aria-label="Close"><IconBack /></button>
         <div style={{ flex: 1 }}><h2><span className="serif">More</span></h2>
-          <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{roleLabel(isSuper, adminOf.length > 0)} · {user.email}</div></div>
+          <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{roleLabel(isSuper, adminOf.length > 0, !!volunteer)} · {volunteer ? 'volunteer account' : user.email}</div></div>
       </div>
       <div className="msheet-body">
         {rest.map(item => <button key={item.to} type="button" className="mlist-row" onClick={() => navigate(item.to)}>

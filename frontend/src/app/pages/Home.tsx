@@ -24,6 +24,18 @@ function SuperStats() {
   </div>;
 }
 
+function VolunteerStats() {
+  const { data, error, loading } = useFetch<{ program: { name: string } | null; canStatus: boolean; canDistribute: boolean; mahalluName: string }>('/volunteer/me');
+  if (loading) return <Loading />;
+  if (!data) return <ErrorNote message={error} />;
+  return <div className="stat-grid" role="list" aria-label="Your role">
+    <Stat label="Mahallu" value={data.mahalluName} sub="where you volunteer" />
+    <Stat label="Program" value={data.program?.name ?? 'None running'} sub={data.program ? 'running now' : 'wait for the admin to start one'} />
+    <Stat label="Animal updates" value={data.canStatus ? 'Yes' : 'No'} sub="slaughter, processing, packing" />
+    <Stat label="Meat giving" value={data.canDistribute ? 'Yes' : 'No'} sub="hand packets to households" />
+  </div>;
+}
+
 function AdminStats({ mahalluId }: { mahalluId: string }) {
   const { data, error, loading } = useFetch<Households>(`/mahallus/${mahalluId}/households`);
   const programs = useFetch<ProgramRow[]>(`/mahallus/${mahalluId}/programs`);
@@ -40,31 +52,36 @@ function AdminStats({ mahalluId }: { mahalluId: string }) {
 
 export function Home() {
   const { user } = useAuth();
-  const { ctx, isSuper, activeMahallu } = useApp();
+  const { ctx, isSuper, activeMahallu, volunteer } = useApp();
   const house = ctx?.households[0];
   const mine = useFetch<Mine>(house ? '/me/programs' : null);
   if (!user) return null;
   const openCount = mine.data?.filter(item => item.status === 'OPEN').length;
   const first = user.name.split(' ')[0];
-  const place = activeMahallu?.mahalluName ?? house?.mahalluName;
+  const place = activeMahallu?.mahalluName ?? volunteer?.mahalluName ?? house?.mahalluName;
   return <div className="stack">
     <section className="hero-panel" aria-label="Welcome">
-      <span className="tag live"><i />{isSuper ? 'Super admin' : activeMahallu ? 'Mahallu admin' : house ? 'Verified member' : 'Welcome'}{place ? ' · ' + place : ''}</span>
+      <span className="tag live"><i />{isSuper ? 'Super admin' : activeMahallu ? 'Mahallu admin' : volunteer ? 'Volunteer' : house ? 'Verified member' : 'Welcome'}{place ? ' · ' + place : ''}</span>
       <h1 style={{ marginTop: 16 }}>{greeting()}, {first}<span className="serif">.</span></h1>
-      <p className="sub">{isSuper ? 'Create mahallus and give their committees access.' :
+      <p className="sub">{volunteer ? 'Thank you for helping your mahallu. Your tasks are below.' : isSuper ? 'Create mahallus and give their committees access.' :
         activeMahallu ? 'Manage your members and run your Udhiyya programs.' :
           house ? 'You are linked to your mahallu. Programs will appear here as soon as your committee opens one.' :
             'Link your household to your mahallu to join its Udhiyya programs.'}</p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 22, position: 'relative', zIndex: 1 }}>
+        {volunteer?.canStatus && <Link className="pillbtn light" to="/app/volunteer/animals">Update animals</Link>}
+        {volunteer?.canDistribute && <Link className="pillbtn light" to="/app/volunteer/distribute">Give out meat</Link>}
         {isSuper && <Link className="pillbtn light" to="/app/mahallus">Manage mahallus</Link>}
         {activeMahallu && <Link className="pillbtn light" to="/app/members">Manage members</Link>}
-        {!house && !isSuper && !activeMahallu && <Link className="pillbtn light" to="/app/join">Link my household</Link>}
+        {!house && !isSuper && !activeMahallu && !volunteer && <Link className="pillbtn light" to="/app/join">Link my household</Link>}
         {activeMahallu && <Link className="pillbtn light" to="/app/manage/programs">Programs</Link>}
+        {activeMahallu && <Link className="pillbtn light" to="/app/volunteers">Volunteers</Link>}
+        {activeMahallu && <Link className="pillbtn light" to="/app/manage/ledger">Ledger</Link>}
+        {house && <Link className="pillbtn light" to="/app/tracking">Track my animal</Link>}
         {house && <Link className="pillbtn light" to="/app/programs">Browse programs</Link>}
         {house && <Link className="pillbtn light" to="/app/join">My mahallu</Link>}
       </div>
     </section>
-    {isSuper ? <SuperStats /> : activeMahallu ? <AdminStats mahalluId={activeMahallu.mahalluId} /> : house ?
+    {volunteer ? <VolunteerStats /> : isSuper ? <SuperStats /> : activeMahallu ? <AdminStats mahalluId={activeMahallu.mahalluId} /> : house ?
       <div className="stat-grid" role="list" aria-label="Your household">
         <Stat label="Mahallu" value={house.mahalluName} sub="your community" />
         <Stat label="Mahallu number" value={house.mahalluNumber} sub="your membership" />

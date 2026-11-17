@@ -29,6 +29,9 @@ const parsed = z.object({
   TELEGRAM_BOT_TOKEN: optional,
   TELEGRAM_WEBHOOK_SECRET: optional,
   TELEGRAM_BOT_USERNAME: optional,
+  RAZORPAY_KEY_ID: optional,
+  RAZORPAY_KEY_SECRET: optional,
+  RAZORPAY_WEBHOOK_SECRET: optional,
   CHATBOT_PROVIDER: z.enum(['faq', 'gemini']).default('faq'),
   GEMINI_API_KEY: optional,
   GEMINI_MODEL: z.string().regex(/^[\w.-]+$/).default('gemini-3.1-flash-lite'),
@@ -68,6 +71,7 @@ export const googleEnabled = Boolean(env.ENABLE_GOOGLE_AUTH && env.GOOGLE_CLIENT
 export const telegramEnabled = Boolean(env.ENABLE_TELEGRAM && env.TELEGRAM_BOT_TOKEN &&
   /^[A-Za-z0-9_-]{16,256}$/.test(env.TELEGRAM_WEBHOOK_SECRET ?? '') &&
   /^[A-Za-z0-9_]{5,32}$/.test(env.TELEGRAM_BOT_USERNAME ?? ''));
+export const razorpayEnabled = Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
 export const emailAvailable = env.EMAIL_PROVIDER === 'mock' ||
   Boolean(env.EMAIL_PROVIDER === 'gmail' && env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET &&
     env.GMAIL_REFRESH_TOKEN && !/[\r\n]/.test(env.EMAIL_FROM ?? '') && z.email().safeParse(env.EMAIL_FROM).success);

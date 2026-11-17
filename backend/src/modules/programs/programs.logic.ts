@@ -22,7 +22,8 @@ export function planAllocation(bookings: { id: string; shares: number }[], capac
   const animals = animalsNeeded(total, capacity);
   const room = Array<number>(animals).fill(capacity);
   const placements: Placement[] = [];
-  const sorted = [...bookings].sort((a, b) => b.shares - a.shares || a.id.localeCompare(b.id));
+  // Equal sizes keep their booking order (a stable sort), so earlier bookings are placed first and results repeat exactly.
+  const sorted = [...bookings].sort((a, b) => b.shares - a.shares);
   for (const booking of sorted) {
     let left = booking.shares;
     let best = -1;

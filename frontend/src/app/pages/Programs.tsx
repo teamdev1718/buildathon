@@ -4,9 +4,12 @@ import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
 import { animalEmoji, animalLabel, dateText, inr, shareText, splitName, type Animal, type PayMode, type Program, type AnimalType } from '../lib/programs';
 import { ErrorNote, Loading, PageHead, useAction, useFetch } from '../ui/kit';
+import { StatusTrack, type Status } from './VolunteerAnimals';
+import { PaymentPanel, type Money, type PaymentRow } from './PaymentPanel';
 
-type Placed = { code: string; shares: number; drawOrder: number | null; slotAt: string | null };
-type MyBooking = { id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number; animals: Placed[] };
+type Placed = { code: string; shares: number; drawOrder: number | null; slotAt: string | null; status: Status };
+type MyBooking = { id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number; animals: Placed[];
+  autopay: boolean; money: Money; payments: PaymentRow[] };
 type MyProgram = Program & { mahalluName: string; household: { id: string; ownerName: string; mahalluNumber: string }; bookings: MyBooking[] };
 
 function Stepper({ value, onChange, disabled }: { value: number; onChange(next: number): void; disabled?: boolean }) {
@@ -24,7 +27,8 @@ function PlacedList({ items }: { items: Placed[] }) {
   return <div className="am-placed">{items.map(item => <div key={item.code} className="am-placed-row">
     <span className="am-code">{item.code}</span>
     <span>{item.shares} {item.shares === 1 ? 'share' : 'shares'}</span>
-    <span className="am-sub">{item.drawOrder ? `#${item.drawOrder} in line${item.slotAt ? ' · ' + slotText(item.slotAt) : ''}` : 'Order not drawn yet'}</span></div>)}</div>;
+    <span className="am-sub">{item.drawOrder ? `#${item.drawOrder} in line${item.slotAt ? ' · ' + slotText(item.slotAt) : ''}` : 'Order not drawn yet'}</span>
+    {item.status !== 'PENDING' && <div style={{ flexBasis: '100%' }}><StatusTrack status={item.status} /></div>}</div>)}</div>;
 }
 
 function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; animal: Animal; booking?: MyBooking; reload(): void }) {
@@ -47,6 +51,7 @@ function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; 
         <button key={value} type="button" className={mode === value ? 'on' : ''} onClick={() => setMode(value)}>{value === 'ONE_TIME' ? 'One-time' : 'Installments'}</button>)}</div>
       <div className="kv"><span>Total</span><b>{inr(total)}</b></div>
       {booking && <PlacedList items={booking.animals} />}
+      {booking && <PaymentPanel bookingId={booking.id} payMode={booking.payMode} money={booking.money} payments={booking.payments} autopay={booking.autopay} open reload={reload} />}
       {error && <p className="am-error" role="alert">{error}</p>}
       <div className="row-actions">
         <button type="button" className="pillbtn" disabled={busy || !dirty} onClick={() => run(async () => {
@@ -60,12 +65,14 @@ function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; 
         }}>Cancel</button>}
       </div></> : booking ? <div className="kv"><span>{booking.shares} {booking.shares === 1 ? 'share' : 'shares'}</span><b>{inr(booking.amount)}</b></div> : null}
     {!open && booking && <PlacedList items={booking.animals} />}
+    {!open && booking && <PaymentPanel bookingId={booking.id} payMode={booking.payMode} money={booking.money} payments={booking.payments} autopay={booking.autopay} open={false} reload={reload} />}
   </article>;
 }
 
 function ProgramBlock({ program, reload }: { program: MyProgram; reload(): void }) {
   const offered = program.animals.filter(item => item.enabled || program.bookings.some(row => row.animalType === item.animalType));
   const booked = program.bookings.reduce((sum, row) => sum + row.amount, 0);
+  const paid = program.bookings.reduce((sum, row) => sum + row.money.paid, 0);
   return <section className="stack am-reveal">
     <div className="hero-panel" style={{ padding: '26px 28px' }}>
       <span className="tag live"><i />{program.status === 'OPEN' ? 'Open for booking' : 'Ended'} · {program.mahalluName}</span>
@@ -73,7 +80,8 @@ function ProgramBlock({ program, reload }: { program: MyProgram; reload(): void 
       <p className="sub">Udhiyya on {dateText(program.targetDate)}{program.description ? ` · ${program.description}` : ''}</p>
       <div style={{ marginTop: 18, position: 'relative', zIndex: 1 }}>
         <div className="lbl" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', color: '#a9d4c2' }}>YOUR BOOKINGS · {program.household.ownerName.toUpperCase()}</div>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 38 }}>{inr(booked)}</div></div>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 38 }}>{inr(booked)}</div>
+        <div style={{ color: '#bfe0d1', fontSize: 14 }}>{inr(paid)} paid · pay in full by {dateText(program.payBy)}</div></div>
     </div>
     <div className="am-grid-animals">{offered.map(animal => <AnimalCard key={animal.animalType + program.status} program={program} animal={animal}
       booking={program.bookings.find(row => row.animalType === animal.animalType)} reload={reload} />)}</div>

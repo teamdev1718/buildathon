@@ -5,10 +5,12 @@ import { useApp } from '../lib/app-context';
 import { animalEmoji, animalLabel, dateText, inr, shareText, splitName, statusLabel, type Animal, type AnimalType, type Program, type PayMode } from '../lib/programs';
 import { CustomSelect } from '../ui/CustomSelect';
 import { Allocation } from './ManageAllocation';
+import { CashModal, PaymentsCard } from './ManagePayments';
 import { ErrorNote, Loading, Modal, PageHead, useAction, useFetch } from '../ui/kit';
 
 type Totals = { animalType: AnimalType; shares: number; animalsNeeded: number; amount: number }[];
 type Booking = { id: string; householdId: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number;
+  paid: number; remaining: number; standing: 'PAID' | 'ON_TRACK' | 'BEHIND';
   household: { mahalluNumber: string; ownerName: string; phone: string } };
 type Bookings = { totals: Totals; rows: Booking[] };
 type Households = { rows: { id: string; mahalluNumber: string; ownerName: string }[] };
@@ -67,7 +69,9 @@ export function ManageProgram() {
   const bookings = useFetch<Bookings>(`/programs/${id}/bookings`);
   const { busy, error, run } = useAction();
   const [adding, setAdding] = useState(false);
-  const reload = () => { program.reload(); bookings.reload(); };
+  const [cash, setCash] = useState<Booking | null>(null);
+  const [version, setVersion] = useState(0);
+  const reload = () => { program.reload(); bookings.reload(); setVersion(count => count + 1); };
   const p = program.data;
   if (program.loading && !p) return <Loading />;
   if (!p) return <ErrorNote message={program.error} />;
@@ -77,7 +81,7 @@ export function ManageProgram() {
   };
   return <>
     <PageHead eyebrow={`${statusLabel[p.status]} program`} title={<>{splitName(p.name)[0]}<span className="serif">{splitName(p.name)[1]}</span></>}
-      sub={`Udhiyya on ${dateText(p.targetDate)}.${p.description ? ' ' + p.description : ''}`}
+      sub={`Udhiyya on ${dateText(p.targetDate)} · payments due by ${dateText(p.payBy)}.${p.description ? ' ' + p.description : ''}`}
       action={<div className="row-actions">
         {p.status === 'DRAFT' && <button type="button" className="pillbtn" disabled={busy} onClick={() => act('start', 'Program started', 'Start this program? Households will be able to book.')}>Start program</button>}
         {p.status === 'OPEN' && <>
@@ -96,15 +100,18 @@ export function ManageProgram() {
             <div className="eyebrow">{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</div>
             <div className="v">{row.animalsNeeded}</div><div className="s">{row.animalsNeeded === 1 ? 'animal' : 'animals'} for {row.shares} {row.shares === 1 ? 'share' : 'shares'} · {inr(row.amount)}</div></div>)}</div>}
         {bookings.data.rows.length === 0 ? <div className="empty"><h3>No bookings yet</h3><p>{p.status === 'DRAFT' ? 'Start the program to let households book.' : 'Bookings will appear here as households join.'}</p></div> :
-          <div className="tx-wrap" style={{ marginTop: 18 }}><table className="tx"><thead><tr><th>House</th><th>Owner</th><th>Animal</th><th>Shares</th><th>Payment</th><th>Amount</th>{p.status === 'OPEN' && <th />}</tr></thead>
+          <div className="tx-wrap" style={{ marginTop: 18 }}><table className="tx"><thead><tr><th>House</th><th>Owner</th><th>Animal</th><th>Shares</th><th>Plan</th><th>Total</th><th>Paid</th><th>Status</th>{p.status === 'OPEN' && <th />}</tr></thead>
             <tbody>{bookings.data.rows.map(row => <tr key={row.id}><td style={{ fontFamily: 'var(--font-mono)' }}>{row.household.mahalluNumber}</td><td><b>{row.household.ownerName}</b></td>
-              <td>{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</td><td>{row.shares}</td><td>{row.payMode === 'ONE_TIME' ? 'One-time' : 'Installments'}</td><td className="amt">{inr(row.amount)}</td>
-              {p.status === 'OPEN' && <td><button type="button" className="chipbtn" onClick={() => {
+              <td>{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</td><td>{row.shares}</td><td>{row.payMode === 'ONE_TIME' ? 'One-time' : 'Installments'}</td><td className="amt">{inr(row.amount)}</td><td className="amt">{inr(row.paid)}</td>
+              <td><span className={'tag' + (row.standing === 'BEHIND' ? ' amber' : '')}>{row.standing === 'PAID' ? 'Paid' : row.standing === 'BEHIND' ? 'Due' : 'On track'}</span></td>
+              {p.status === 'OPEN' && <td><div className="row-actions">{row.remaining > 0 && <button type="button" className="chipbtn" onClick={() => setCash(row)}>Cash</button>}<button type="button" className="chipbtn" onClick={() => {
                 if (!window.confirm(`Cancel ${row.household.ownerName}'s booking?`)) return;
                 void run(async () => { await api('/bookings/' + row.id, 'DELETE', {}, true); toast('Booking cancelled'); reload(); });
-              }}>Cancel</button></td>}</tr>)}</tbody></table></div>}</>}
+              }}>Cancel</button></div></td>}</tr>)}</tbody></table></div>}</>}
     </section>
+    {p.status !== 'DRAFT' && <PaymentsCard programId={id} open={p.status === 'OPEN'} refreshKey={version} onChange={reload} />}
     {p.status !== 'DRAFT' && <Allocation programId={id} open={p.status === 'OPEN'} onChange={reload} />}
+    {cash && <CashModal bookingId={cash.id} owner={cash.household.ownerName} remaining={cash.remaining} close={() => setCash(null)} done={reload} />}
     {adding && <AddBooking program={p} close={() => setAdding(false)} done={reload} />}
   </>;
 }

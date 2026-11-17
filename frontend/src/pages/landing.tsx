@@ -34,7 +34,7 @@ function Nav() {
   const { user } = useAuth();
   return <header className="lp-nav"><nav aria-label="Main navigation">
     <Link to="/" className="lp-brand"><span className="lp-logo">U</span>Udhiyya Saver</Link>
-    <div className="lp-links"><a href="#how">How it works</a><a href="#plans">Plans</a><a href="#distribution">Distribution</a><a href="#faq">FAQ</a></div>
+    <div className="lp-links"><a href="#how">How it works</a><a href="#plans">Plans</a><a href="#distribution">Distribution</a><Link to="/transparency">Public ledger</Link><a href="#faq">FAQ</a></div>
     <div className="lp-nav-cta">{user ? <Link className="lp-btn lp-btn-green" to="/app">Open Udhiyya</Link> : <>
       <Link className="lp-login" to="/login">Log in</Link>
       <Link className="lp-btn lp-btn-green" to="/register">Get Started</Link></>}</div>
@@ -210,7 +210,7 @@ function Footer() {
         <div><b className="lp-footer-title">Udhiyya management, made simple.</b>
           <p>Udhiyya Saver connects families, collectors and your mahal committee through one transparent platform.</p></div>
         <nav aria-label="Footer">
-          <div><h3>Product</h3><a href="#how">How it works</a><a href="#plans">Plans</a><a href="#distribution">Distribution</a></div>
+          <div><h3>Product</h3><a href="#how">How it works</a><a href="#plans">Plans</a><a href="#distribution">Distribution</a><Link to="/transparency">Public ledger</Link></div>
           <div><h3>Account</h3><Link to="/register">Create account</Link><Link to="/login">Sign in</Link><Link to="/app">My Udhiyya</Link></div>
           <div><h3>Help</h3><a href="#faq">FAQ</a><Link to="/profile">Notifications</Link></div>
         </nav>

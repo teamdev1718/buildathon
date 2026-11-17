@@ -5,7 +5,7 @@ import { animalEmoji, animalLabel, type AnimalType } from '../lib/programs';
 import { ErrorNote, Field, Loading, Modal, useAction, useFetch } from '../ui/kit';
 
 type Holder = { bookingId: string; shares: number; mahalluNumber: string; ownerName: string };
-type Unit = { id: string; code: string; animalType: AnimalType; capacity: number; filled: number; drawOrder: number | null; slotAt: string | null; holders: Holder[] };
+type Unit = { id: string; code: string; status: 'PENDING' | 'SLAUGHTERED' | 'PROCESSING' | 'PACKED'; animalType: AnimalType; capacity: number; filled: number; drawOrder: number | null; slotAt: string | null; holders: Holder[] };
 type Row = { id: string; animalType: AnimalType; shares: number; allocated: number; household: { mahalluNumber: string; ownerName: string };
   allocations: { animalId: string; shares: number }[] };
 type View = { allocatedAt: string | null; drawStartAt: string | null; drawMinutes: number | null; drawn: boolean; bookedShares: number;
@@ -82,7 +82,7 @@ export function Allocation({ programId, open, onChange }: { programId: string; o
       </div>
 
       <h3 style={{ margin: '24px 0 10px' }}>{data.drawn ? 'Slaughter order' : 'Animals'}</h3>
-      <div className="tx-wrap"><table className="tx"><thead><tr>{data.drawn && <th>#</th>}<th>Code</th><th>Animal</th><th>Filled</th><th>Shared by</th>{data.drawn && <th>Slot</th>}{data.drawn && open && <th />}</tr></thead>
+      <div className="tx-wrap"><table className="tx"><thead><tr>{data.drawn && <th>#</th>}<th>Code</th><th>Animal</th><th>Filled</th><th>Shared by</th>{data.drawn && <th>Slot</th>}<th>Status</th>{data.drawn && open && <th />}</tr></thead>
         <tbody>{data.animals.map((unit, index) => <tr key={unit.id}>
           {data.drawn && <td className="amt">{unit.drawOrder}</td>}
           <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{unit.code}</td>
@@ -90,6 +90,10 @@ export function Allocation({ programId, open, onChange }: { programId: string; o
           <td><span className={'tag' + (unit.filled < unit.capacity ? ' amber' : '')}>{unit.filled}/{unit.capacity}</span></td>
           <td style={{ minWidth: 220 }}>{unit.holders.length ? unit.holders.map(item => `${item.ownerName} (${item.mahalluNumber})${item.shares > 1 ? ' ×' + item.shares : ''}`).join(', ') : '—'}</td>
           {data.drawn && <td>{when(unit.slotAt)}</td>}
+          <td>{open ? <select className="am-statusselect" aria-label={`Status of ${unit.code}`} value={unit.status} disabled={busy}
+            onChange={event => void run(async () => { await api(`/animals/${unit.id}/status`, 'PUT', { status: event.target.value }, true); refresh(); })}>
+            <option value="PENDING">Waiting</option><option value="SLAUGHTERED">Slaughtered</option><option value="PROCESSING">Processing</option><option value="PACKED">Packed</option></select> :
+            <span className="tag">{unit.status.toLowerCase()}</span>}</td>
           {data.drawn && open && <td><div className="row-actions"><button type="button" className="chipbtn" disabled={busy || index === 0} aria-label={`Move ${unit.code} earlier`} onClick={() => move(index, -1)}>▲</button>
             <button type="button" className="chipbtn" disabled={busy || index === data.animals.length - 1} aria-label={`Move ${unit.code} later`} onClick={() => move(index, 1)}>▼</button></div></td>}
         </tr>)}</tbody></table></div>

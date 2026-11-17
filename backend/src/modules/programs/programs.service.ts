@@ -3,6 +3,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { db } from '../../lib/db.js';
 import { ApiError } from '../../lib/http.js';
 import { assertMahalluAdmin } from '../mahallus/mahallus.service.js';
+import { defaultPayBy, financeOf } from './payments.logic.js';
 import { animalsNeeded, animalTypes, bookingTotal, sharePrice, sharesPerAnimal } from './programs.logic.js';
 import type { animalUpdate, bookingInput, bookingUpdate, programInput, programUpdate } from './programs.schema.js';
 
@@ -20,6 +21,7 @@ const animalView = (row: ProgramRow['animals'][number]) => ({
 const programView = (row: ProgramRow) => ({
   id: row.id, mahalluId: row.mahalluId, name: row.name, year: row.year, targetDate: row.targetDate,
   description: row.description, status: row.status, openedAt: row.openedAt, endedAt: row.endedAt,
+  payBy: row.payByDate ?? defaultPayBy(row.targetDate), payByCustom: row.payByDate !== null,
   animals: row.animals.map(animalView),
 });
 
@@ -43,6 +45,7 @@ export const programService = {
   },
 
   async create(mahalluId: string, input: z.output<typeof programInput>) {
+    if (input.payByDate && input.payByDate > input.targetDate) throw new ApiError(400, 'INVALID_INPUT', 'Pay-by date must be on or before Udhiyya.');
     if (await db.program.findFirst({ where: { mahalluId, status: { not: 'ENDED' } } })) {
       throw new ApiError(409, 'PROGRAM_OPEN', 'End the current program before starting a new one.');
     }
@@ -62,6 +65,9 @@ export const programService = {
     const program = await loadProgram(programId);
     await assertMahalluAdmin(actor, program.mahalluId);
     if (program.status === 'ENDED') throw new ApiError(409, 'PROGRAM_ENDED', 'This program has ended.');
+    const target = input.targetDate ?? program.targetDate;
+    const payBy = input.payByDate ?? program.payByDate;
+    if (payBy && payBy > target) throw new ApiError(400, 'INVALID_INPUT', 'Pay-by date must be on or before Udhiyya.');
     await db.program.update({ where: { id: programId }, data: input });
     return programView(await loadProgram(programId));
   },
@@ -103,7 +109,7 @@ export const programService = {
     const program = await loadProgram(programId);
     await assertMahalluAdmin(actor, program.mahalluId);
     const rows = await db.booking.findMany({ where: { programId }, orderBy: { createdAt: 'asc' },
-      include: { household: { select: { mahalluNumber: true, ownerName: true, phone: true } } } });
+      include: { household: { select: { mahalluNumber: true, ownerName: true, phone: true } }, payments: true } });
     const byType = new Map<string, number>();
     for (const row of rows) byType.set(row.animalType, (byType.get(row.animalType) ?? 0) + row.shares);
     const price = new Map(program.animals.map(item => [item.animalType, item]));
@@ -115,8 +121,10 @@ export const programService = {
       }),
       rows: rows.map(row => {
         const animal = price.get(row.animalType)!;
+        const money = financeOf({ ...row, program }, new Date());
         return { id: row.id, householdId: row.householdId, animalType: row.animalType, shares: row.shares, payMode: row.payMode,
-          amount: bookingTotal(row.shares, animal.price, animal.sharesPerAnimal), createdAt: row.createdAt, household: row.household };
+          amount: bookingTotal(row.shares, animal.price, animal.sharesPerAnimal), createdAt: row.createdAt, household: row.household,
+          paid: money.paid, remaining: money.remaining, standing: money.standing };
       }),
     };
   },
@@ -172,16 +180,19 @@ export const programService = {
     const programs = await db.program.findMany({ where: { mahalluId: { in: households.map(item => item.mahalluId) },
       status: { in: ['OPEN', 'ENDED'] } }, orderBy: { createdAt: 'desc' }, take: 10,
     include: { ...withAnimals, mahallu: { select: { name: true } },
-      bookings: { where: { household: { userId } }, include: { allocations: { include: { animal: true } } } } } });
+      bookings: { where: { household: { userId } }, include: { allocations: { include: { animal: true } }, payments: { orderBy: { createdAt: 'desc' } } } } } });
     return programs.map(({ bookings, mahallu, ...row }) => {
       const view = programView(row);
       const household = households.find(item => item.mahalluId === row.mahalluId)!;
       return { ...view, mahalluName: mahallu.name, household,
         bookings: bookings.map(booking => {
           const animal = row.animals.find(item => item.animalType === booking.animalType)!;
+          const money = financeOf({ ...booking, program: row });
           return { id: booking.id, animalType: booking.animalType, shares: booking.shares, payMode: booking.payMode,
-            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal),
-            animals: booking.allocations.map(item => ({ code: item.animal.code, shares: item.shares, drawOrder: item.animal.drawOrder,
+            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal), autopay: booking.autopay, money,
+            payments: booking.payments.map(item => ({ id: item.id, amount: item.amount, method: item.method, status: item.status,
+              note: item.note, createdAt: item.createdAt })),
+            animals: booking.allocations.map(item => ({ code: item.animal.code, shares: item.shares, drawOrder: item.animal.drawOrder, status: item.animal.status,
               slotAt: item.animal.slotAt })).sort((a, b) => a.code.localeCompare(b.code)) };
         }) };
     });

@@ -9,6 +9,7 @@ export const programInput = z.strictObject({
   name: text(80),
   year: z.number().int().min(2024).max(2100),
   targetDate: day,
+  payByDate: day.optional(),
   description: text(500).optional(),
 });
 export const programUpdate = programInput.partial();

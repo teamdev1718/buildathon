@@ -99,6 +99,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
         <Link to="/forgot-password">Forgot password?</Link>
         <Link to="/verify-email">Verify email</Link>
         <Link to="/register">Create an account</Link>
+        <Link to="/volunteer-login">Volunteer? Sign in with a username</Link>
       </>}
       {loginStep && <button className="secondary" onClick={() => setLoginStep(undefined)}>Back to password</button>}
       {mode !== 'login' && <Link to="/login">Back to sign in</Link>}

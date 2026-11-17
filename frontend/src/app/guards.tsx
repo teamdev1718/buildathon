@@ -7,9 +7,9 @@ export function AppRoot() {
 }
 
 /** Keeps screens for one kind of user away from everyone else. */
-export function Require({ allow }: { allow: 'super' | 'admin' }) {
-  const { isSuper, adminOf, loading } = useApp();
+export function Require({ allow }: { allow: 'super' | 'admin' | 'status' | 'distribute' }) {
+  const { isSuper, adminOf, volunteer, loading } = useApp();
   if (loading) return null;
-  const ok = allow === 'super' ? isSuper : adminOf.length > 0;
+  const ok = allow === 'super' ? isSuper : allow === 'admin' ? adminOf.length > 0 : allow === 'status' ? Boolean(volunteer?.canStatus) : Boolean(volunteer?.canDistribute);
   return ok ? <Outlet /> : <Navigate to="/app" replace />;
 }

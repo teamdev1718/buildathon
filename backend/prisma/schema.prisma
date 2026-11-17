@@ -36,6 +36,8 @@ model User {
   meatTokens      MeatToken[]
   username        String?  @unique
   staffRoles      MahalluStaff[]
+  volunteer       Volunteer?
+  inbox           InboxItem[]
   households      Household[]
   @@schema("app_private")
 }
@@ -336,6 +338,7 @@ model Mahallu {
   staff      MahalluStaff[]
   households Household[]
   programs   Program[]
+  volunteers Volunteer[]
   @@schema("app_private")
 }
 
@@ -365,6 +368,7 @@ model Household {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   bookings       Booking[]
+  handouts       Distribution[]
   @@unique([mahalluId, mahalluNumber])
   @@unique([userId, mahalluId])
   @@index([mahalluId, ownerName])
@@ -396,6 +400,7 @@ model Program {
   status      ProgramStatus @default(DRAFT)
   openedAt    DateTime?
   endedAt     DateTime?
+  payByDate   DateTime?
   allocatedAt DateTime?
   drawStartAt DateTime?
   drawMinutes Int?
@@ -403,6 +408,9 @@ model Program {
   animals     ProgramAnimal[]
   bookings    Booking[]
   units       SlaughterAnimal[]
+  issues      MeatIssue[]
+  handouts    Distribution[]
+  expenses    Expense[]
   @@index([mahalluId, status])
   @@schema("app_private")
 }
@@ -428,9 +436,11 @@ model Booking {
   animalType  AnimalType
   shares      Int
   payMode     PayMode @default(INSTALLMENTS)
+  autopay     Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   allocations ShareAllocation[]
+  payments    ProgramPayment[]
   @@unique([programId, householdId, animalType])
   @@index([householdId])
   @@schema("app_private")
@@ -444,6 +454,11 @@ model SlaughterAnimal {
   code        String
   drawOrder   Int?
   slotAt      DateTime?
+  status      AnimalStatus @default(PENDING)
+  slaughteredAt DateTime?
+  processingAt  DateTime?
+  packedAt      DateTime?
+  statusById    String?
   createdAt   DateTime @default(now())
   allocations ShareAllocation[]
   @@unique([programId, code])
@@ -460,5 +475,122 @@ model ShareAllocation {
   shares    Int
   @@unique([animalId, bookingId])
   @@index([bookingId])
+  @@schema("app_private")
+}
+
+model ProgramPayment {
+  id                String @id @default(uuid())
+  bookingId         String
+  booking           Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount            Int
+  method            PaymentMethod
+  status            PaymentStatus
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? @unique
+  recordedById      String?
+  note              String?
+  createdAt         DateTime @default(now())
+  confirmedAt       DateTime?
+  @@index([bookingId, status])
+  @@index([status, createdAt])
+  @@schema("app_private")
+}
+
+enum AnimalStatus {
+  PENDING
+  SLAUGHTERED
+  PROCESSING
+  PACKED
+  @@schema("app_private")
+}
+
+model Volunteer {
+  id            String @id @default(uuid())
+  userId        String @unique
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mahalluId     String
+  mahallu       Mahallu @relation(fields: [mahalluId], references: [id], onDelete: Cascade)
+  name          String
+  phone         String?
+  canStatus     Boolean @default(false)
+  canDistribute Boolean @default(false)
+  terminatedAt  DateTime?
+  createdById   String?
+  createdAt     DateTime @default(now())
+  issues        MeatIssue[]
+  handouts      Distribution[]
+  @@index([mahalluId, terminatedAt])
+  @@schema("app_private")
+}
+
+model MeatIssue {
+  id          String @id @default(uuid())
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  programId   String
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  packets     Int
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  @@index([programId, volunteerId])
+  @@schema("app_private")
+}
+
+model Distribution {
+  id          String @id @default(uuid())
+  programId   String
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  packets     Int
+  receivedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@index([programId, volunteerId])
+  @@index([householdId])
+  @@schema("app_private")
+}
+
+enum ExpenseCategory {
+  ANIMALS
+  TRANSPORT
+  LABOUR
+  PACKING
+  FOOD
+  OTHER
+  @@schema("app_private")
+}
+
+model InboxItem {
+  id        String @id @default(uuid())
+  key       String @unique
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  title     String
+  body      String
+  link      String?
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+  @@index([userId, createdAt])
+  @@schema("app_private")
+}
+
+model Expense {
+  id          String @id @default(uuid())
+  programId   String
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  title       String
+  category    ExpenseCategory
+  amount      Int
+  spentOn     DateTime
+  note        String?
+  voidedAt    DateTime?
+  voidReason  String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  @@index([programId, spentOn])
   @@schema("app_private")
 }

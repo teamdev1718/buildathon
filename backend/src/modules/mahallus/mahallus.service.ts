@@ -118,12 +118,15 @@ export const mahalluService = {
   },
 
   async context(userId: string) {
-    const [staff, households] = await Promise.all([
+    const [staff, households, volunteer] = await Promise.all([
       db.mahalluStaff.findMany({ where: { userId }, select: { role: true, mahallu: { select: { id: true, name: true } } } }),
       db.household.findMany({ where: { userId }, select: { id: true, mahalluNumber: true, ownerName: true, memberCount: true,
         mahallu: { select: { id: true, name: true } } } }),
+      db.volunteer.findUnique({ where: { userId }, include: { mahallu: { select: { name: true } } } }),
     ]);
     return {
+      volunteer: volunteer && !volunteer.terminatedAt ? { id: volunteer.id, name: volunteer.name, mahalluId: volunteer.mahalluId,
+        mahalluName: volunteer.mahallu.name, canStatus: volunteer.canStatus, canDistribute: volunteer.canDistribute } : null,
       staff: staff.map(item => ({ role: item.role, mahalluId: item.mahallu.id, mahalluName: item.mahallu.name })),
       households: households.map(({ mahallu, ...row }) => ({ ...row, mahalluId: mahallu.id, mahalluName: mahallu.name })),
     };
