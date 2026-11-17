@@ -4,6 +4,9 @@ import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useNavigate } fro
 import { AuthProvider, useAuth } from './contexts/auth';
 import { AuthPage } from './pages/auth';
 import { Dashboard, Profile } from './pages/account';
+import { Udhiyya } from './pages/udhiyya';
+import { Collector } from './pages/udhiyya-collect';
+import { UdhiyyaAdmin } from './pages/udhiyya-admin';
 import { ChatWidget } from './features/chat/widget';
 import './styles.css';
 
@@ -13,8 +16,11 @@ function Layout() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return <>
-    <header><nav aria-label="Main navigation"><Link to="/" className="brand">Buildathon Starter</Link>
-      {user ? <><Link to="/dashboard">Dashboard</Link><Link to="/profile">Profile</Link>
+    <header><nav aria-label="Main navigation"><Link to="/" className="brand">Udhiyya Saver</Link>
+      {user ? <><Link to="/udhiyya">Udhiyya</Link>
+        {user.permissions.includes('udhiyya.collect') && <Link to="/udhiyya/collect">Collector desk</Link>}
+        {user.permissions.includes('udhiyya.manage') && <Link to="/udhiyya/manage">Manage</Link>}
+        <Link to="/dashboard">Dashboard</Link><Link to="/profile">Profile</Link>
         <button className="secondary" disabled={busy} onClick={async () => {
           setBusy(true);
           setError('');
@@ -40,9 +46,9 @@ function Protected() {
 function Home() {
   const { user } = useAuth();
   return <section className="hero">
-    <h1>Buildathon Starter</h1>
-    <p>Manage your account, connect Telegram, and get help when you need it.</p>
-    <div className="actions">{user ? <Link className="button" to="/dashboard">Open dashboard</Link> : <>
+    <h1>Udhiyya, one month at a time</h1>
+    <p>Save for your family’s Udhiyya in small monthly installments through your mahal, then collect your share of the meat with a simple token.</p>
+    <div className="actions">{user ? <Link className="button" to="/udhiyya">Open Udhiyya</Link> : <>
       <Link className="button" to="/register">Create an account</Link>
       <Link className="button secondary" to="/login">Sign in</Link>
     </>}</div>
@@ -58,7 +64,10 @@ createRoot(document.getElementById('root')!).render(
     <Route path="forgot-password" element={<AuthPage key="forgot" mode="forgot" />} />
     <Route path="reset-password" element={<AuthPage key="reset" mode="reset" />} />
     <Route element={<Protected />}><Route path="dashboard" element={<Dashboard />} />
-      <Route path="profile" element={<Profile />} /></Route>
+      <Route path="profile" element={<Profile />} />
+      <Route path="udhiyya" element={<Udhiyya />} />
+      <Route path="udhiyya/collect" element={<Collector />} />
+      <Route path="udhiyya/manage" element={<UdhiyyaAdmin />} /></Route>
     <Route path="*" element={<section className="panel"><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
   </Route></Routes></AuthProvider></BrowserRouter>,
 );

@@ -32,6 +32,8 @@ model User {
   audits          AuditEvent[]
   notifications   Notification[]
   telegramLink    TelegramLink?
+  enrollments     Enrollment[]
+  meatTokens      MeatToken[]
   @@schema("app_private")
 }
 
@@ -146,3 +148,171 @@ model TelegramUpdate {
   @@schema("app_private")
 }
 
+
+enum CycleStatus {
+  ACTIVE
+  PROCUREMENT
+  DISTRIBUTION
+  CLOSED
+  @@schema("app_private")
+}
+
+enum AnimalType {
+  GOAT
+  SHEEP
+  COW
+  CAMEL
+  @@schema("app_private")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  CANCELLED
+  @@schema("app_private")
+}
+
+enum PaymentMethod {
+  CASH
+  ONLINE
+  @@schema("app_private")
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  @@schema("app_private")
+}
+
+enum TokenKind {
+  MEMBER
+  BENEFICIARY
+  @@schema("app_private")
+}
+
+enum TokenStatus {
+  PENDING
+  COLLECTED
+  @@schema("app_private")
+}
+
+model UdhiyyaCycle {
+  id               String @id @default(uuid())
+  name             String
+  targetDate       DateTime
+  priceLockDate    DateTime
+  status           CycleStatus @default(ACTIVE)
+  familyPercent    Int @default(33)
+  relativesPercent Int @default(33)
+  poorPercent      Int @default(34)
+  meatKgPerShare   Int @default(10)
+  slots            String[]
+  createdAt        DateTime @default(now())
+  plans            AnimalPlan[]
+  enrollments      Enrollment[]
+  animals          Animal[]
+  tokens           MeatToken[]
+  @@index([status])
+  @@schema("app_private")
+}
+
+model AnimalPlan {
+  id              String @id @default(uuid())
+  cycleId         String
+  cycle           UdhiyyaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  name            String
+  animalType      AnimalType
+  sharePrice      Int
+  sharesPerAnimal Int
+  enrollments     Enrollment[]
+  @@index([cycleId])
+  @@schema("app_private")
+}
+
+model Enrollment {
+  id            String @id @default(uuid())
+  cycleId       String
+  cycle         UdhiyyaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          AnimalPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  shares        Int
+  holderNames   String[]
+  totalAmount   Int
+  installments  Int
+  monthlyAmount Int
+  status        EnrollmentStatus @default(ACTIVE)
+  createdAt     DateTime @default(now())
+  payments      Payment[]
+  @@unique([cycleId, userId, planId])
+  @@index([userId])
+  @@index([cycleId, status])
+  @@schema("app_private")
+}
+
+model Payment {
+  id           String @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  amount       Int
+  method       PaymentMethod
+  status       PaymentStatus
+  reference    String?
+  recordedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+  @@index([enrollmentId, status])
+  @@index([status, createdAt])
+  @@schema("app_private")
+}
+
+model Animal {
+  id        String @id @default(uuid())
+  cycleId   String
+  cycle     UdhiyyaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  animalType AnimalType
+  label     String
+  weightKg  Int?
+  cost      Int?
+  seller    String?
+  createdAt DateTime @default(now())
+  @@index([cycleId])
+  @@schema("app_private")
+}
+
+model Beneficiary {
+  id            String @id @default(uuid())
+  name          String
+  phone         String?
+  area          String
+  address       String?
+  needsDelivery Boolean @default(false)
+  active        Boolean @default(true)
+  createdAt     DateTime @default(now())
+  tokens        MeatToken[]
+  @@index([active])
+  @@schema("app_private")
+}
+
+model MeatToken {
+  id            String @id @default(uuid())
+  cycleId       String
+  cycle         UdhiyyaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  kind          TokenKind
+  userId        String?
+  user          User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beneficiaryId String?
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  code          String @unique
+  slot          String?
+  grams         Int
+  delivery      Boolean @default(false)
+  status        TokenStatus @default(PENDING)
+  collectedAt   DateTime?
+  collectedById String?
+  @@unique([cycleId, userId])
+  @@unique([cycleId, beneficiaryId])
+  @@index([cycleId, status])
+  @@schema("app_private")
+}

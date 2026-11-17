@@ -58,4 +58,26 @@ button:disabled { opacity: .6; cursor: wait; }
 .chat-panel { width: min(23rem, calc(100vw - 2rem)); padding: 1rem; box-shadow: 0 .5rem 2rem #25362b19; }
 .messages { max-height: min(30vh, 15rem); overflow: auto; padding-right: .25rem; overflow-wrap: anywhere; }
 .chat-question { color: #1c4939; font-weight: 650; }
-
+select { width: 100%; padding: .65rem .8rem; border: 1px solid #9ca99f; border-radius: .45rem; font: inherit; background: #fff; }
+.wide { max-width: none; }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; justify-content: space-between; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.card { border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; display: grid; gap: .5rem; align-content: start; }
+.card h3, .card p { margin: 0; }
+h3 { font-size: 1.05rem; margin: .5rem 0; }
+.grid3 { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
+.stats { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.stat { border: 1px solid var(--line); border-radius: .75rem; padding: .75rem 1rem; display: grid; }
+.stat strong { font-size: 1.5rem; }
+.stat span { color: #536159; font-size: .9rem; }
+.badge { padding: .15rem .6rem; border-radius: 99rem; background: #e8ebe6; font-size: .85rem; font-weight: 650; text-transform: capitalize; }
+.badge.paid, .badge.on_track { background: #dcefe3; color: #1c4939; }
+.badge.behind { background: #f9e3dc; color: #792e21; }
+.progress { height: .6rem; background: #e8ebe6; border-radius: 99rem; overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--green); }
+.code { font: 700 1.9rem/1.2 ui-monospace, monospace; letter-spacing: .15em; margin: 0; }
+table { width: 100%; border-collapse: collapse; font-size: .95rem; display: block; overflow-x: auto; }
+caption { text-align: left; font-weight: 650; padding: .4rem 0; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+details { border: 1px solid var(--line); border-radius: .6rem; padding: .6rem .9rem; }
+summary { cursor: pointer; font-weight: 650; }

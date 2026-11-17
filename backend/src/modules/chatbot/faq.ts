@@ -7,7 +7,15 @@ export const faq = [
     answer: 'Open Profile and select Connect Telegram. Start the bot to opt in. Disconnect anytime from your profile.' },
   { keywords: ['profile', 'name', 'account'],
     answer: 'Sign in and open Profile to update your name and notification preferences.' },
+  { keywords: ['udhiyya', 'qurbani', 'installment', 'installments', 'enrol', 'enroll', 'join', 'share', 'shares'],
+    answer: 'Open Udhiyya, pick an animal plan and choose your shares. The monthly amount is the plan price divided by the months left before the price lock date. Joining later means a higher monthly amount.' },
+  { keywords: ['pay', 'payment', 'paid', 'cash', 'upi', 'online', 'balance'],
+    answer: 'Pay cash to a mahal collector, or send a UPI payment and enter its reference under your enrolment. Online payments count once a collector confirms them.' },
+  { keywords: ['meat', 'token', 'distribution', 'collect', 'collection', 'slot', 'delivery', 'qr'],
+    answer: 'After the Udhiyya, fully paid members get a meat token with a pickup slot under Udhiyya. Show the code to a volunteer at the collection point. Home delivery is arranged by the mahal for those who need it.' },
+  { keywords: ['refund', 'cancel', 'price', 'lock'],
+    answer: 'The mahal holds the funds and sets the refund and price rules. Ask the mahal committee about cancellations. The final price is locked on the price lock date shown on your cycle.' },
   { keywords: ['help', 'hello', 'support'],
-    answer: 'I can help with sign-in, verification, password resets, your profile, and Telegram.' },
+    answer: 'I can help with Udhiyya installments, payments, meat collection, sign-in, verification, password resets, your profile, and Telegram.' },
 ];
 
