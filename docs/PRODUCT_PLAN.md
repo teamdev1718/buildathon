@@ -13,7 +13,7 @@ Build order, one slice at a time. Each phase ships backend and frontend together
 ## Phases
 1. **Foundation (done):** mahallus, staff scoping, households (manual add, CSV or Excel import), super admin screen, scoped app shell for desktop and mobile, sign-in restyle, member linking.
 2. **Programs (done):** per-mahallu programs (Udhiyya 2027), editable animal types and prices (goat 1 share, other animals 7), start and end a program, member enrolment with share counts.
-3. **Allocation and draw:** unique animal codes, correct animal counts, auto-allocate button, manual edits, random draw for slaughter order and time slots.
+3. **Allocation and draw (done):** unique animal codes, correct animal counts, auto-allocate button, manual edits, random draw for slaughter order and time slots.
 4. **Payments:** one-time and installments, Razorpay checkout and webhook, cash recorded by admin or volunteer, history, autopay toggle, monthly reminders.
 5. **Volunteers:** generated credentials, termination, status role (slaughtered, processing, packed), distribution role (stock given, handed out, who received).
 6. **Member tracking:** animal code, status, queue position, time slot, "you are next" notification, received-meat confirmation.

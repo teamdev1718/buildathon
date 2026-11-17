@@ -4,6 +4,7 @@ import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
 import { animalEmoji, animalLabel, dateText, inr, shareText, splitName, statusLabel, type Animal, type AnimalType, type Program, type PayMode } from '../lib/programs';
 import { CustomSelect } from '../ui/CustomSelect';
+import { Allocation } from './ManageAllocation';
 import { ErrorNote, Loading, Modal, PageHead, useAction, useFetch } from '../ui/kit';
 
 type Totals = { animalType: AnimalType; shares: number; animalsNeeded: number; amount: number }[];
@@ -103,6 +104,7 @@ export function ManageProgram() {
                 void run(async () => { await api('/bookings/' + row.id, 'DELETE', {}, true); toast('Booking cancelled'); reload(); });
               }}>Cancel</button></td>}</tr>)}</tbody></table></div>}</>}
     </section>
+    {p.status !== 'DRAFT' && <Allocation programId={id} open={p.status === 'OPEN'} onChange={reload} />}
     {adding && <AddBooking program={p} close={() => setAdding(false)} done={reload} />}
   </>;
 }

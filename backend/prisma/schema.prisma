@@ -396,9 +396,13 @@ model Program {
   status      ProgramStatus @default(DRAFT)
   openedAt    DateTime?
   endedAt     DateTime?
+  allocatedAt DateTime?
+  drawStartAt DateTime?
+  drawMinutes Int?
   createdAt   DateTime @default(now())
   animals     ProgramAnimal[]
   bookings    Booking[]
+  units       SlaughterAnimal[]
   @@index([mahalluId, status])
   @@schema("app_private")
 }
@@ -426,7 +430,35 @@ model Booking {
   payMode     PayMode @default(INSTALLMENTS)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  allocations ShareAllocation[]
   @@unique([programId, householdId, animalType])
   @@index([householdId])
+  @@schema("app_private")
+}
+
+model SlaughterAnimal {
+  id          String @id @default(uuid())
+  programId   String
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  animalType  AnimalType
+  code        String
+  drawOrder   Int?
+  slotAt      DateTime?
+  createdAt   DateTime @default(now())
+  allocations ShareAllocation[]
+  @@unique([programId, code])
+  @@index([programId, drawOrder])
+  @@schema("app_private")
+}
+
+model ShareAllocation {
+  id        String @id @default(uuid())
+  animalId  String
+  animal    SlaughterAnimal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  shares    Int
+  @@unique([animalId, bookingId])
+  @@index([bookingId])
   @@schema("app_private")
 }

@@ -151,6 +151,8 @@ export const programService = {
 
   async changeBooking(actor: Actor, bookingId: string, input: z.output<typeof bookingUpdate>) {
     const booking = await programService.bookingAccess(actor, bookingId);
+    // A different share count invalidates where those shares were placed; the admin allocates again.
+    if (input.shares !== undefined && input.shares !== booking.shares) await db.shareAllocation.deleteMany({ where: { bookingId } });
     const updated = await db.booking.update({ where: { id: bookingId }, data: input });
     const animal = booking.program.animals.find(item => item.animalType === updated.animalType)!;
     return { ...updated, amount: bookingTotal(updated.shares, animal.price, animal.sharesPerAnimal) };
@@ -170,7 +172,7 @@ export const programService = {
     const programs = await db.program.findMany({ where: { mahalluId: { in: households.map(item => item.mahalluId) },
       status: { in: ['OPEN', 'ENDED'] } }, orderBy: { createdAt: 'desc' }, take: 10,
     include: { ...withAnimals, mahallu: { select: { name: true } },
-      bookings: { where: { household: { userId } } } } });
+      bookings: { where: { household: { userId } }, include: { allocations: { include: { animal: true } } } } } });
     return programs.map(({ bookings, mahallu, ...row }) => {
       const view = programView(row);
       const household = households.find(item => item.mahalluId === row.mahalluId)!;
@@ -178,7 +180,9 @@ export const programService = {
         bookings: bookings.map(booking => {
           const animal = row.animals.find(item => item.animalType === booking.animalType)!;
           return { id: booking.id, animalType: booking.animalType, shares: booking.shares, payMode: booking.payMode,
-            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal) };
+            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal),
+            animals: booking.allocations.map(item => ({ code: item.animal.code, shares: item.shares, drawOrder: item.animal.drawOrder,
+              slotAt: item.animal.slotAt })).sort((a, b) => a.code.localeCompare(b.code)) };
         }) };
     });
   },

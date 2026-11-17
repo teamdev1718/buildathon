@@ -3,7 +3,8 @@ import { ApiError } from '../../lib/http.js';
 import { currentUser, requireAuth } from '../../middleware/auth.js';
 import { assertMahalluAdmin } from '../mahallus/mahallus.service.js';
 import { idParam } from '../udhiyya/udhiyya.schema.js';
-import { animalType, animalUpdate, bookingInput, bookingUpdate, empty, programInput, programUpdate } from './programs.schema.js';
+import { allocationService } from './allocation.service.js';
+import { allocationInput, animalType, animalUpdate, bookingInput, bookingUpdate, drawInput, empty, orderInput, programInput, programUpdate } from './programs.schema.js';
 import { programService } from './programs.service.js';
 
 const auth = [requireAuth];
@@ -48,3 +49,14 @@ route({ method: 'patch', path: '/bookings/:id', summary: 'Change shares or payme
   middleware: auth, body: bookingUpdate }, (input, req) => programService.changeBooking(currentUser(req), idParam(req.params.id), input));
 route({ method: 'delete', path: '/bookings/:id', summary: 'Cancel a booking while the program is open', protected: true,
   middleware: auth }, (_input, req) => programService.cancelBooking(currentUser(req), idParam(req.params.id)));
+
+route({ method: 'get', path: '/programs/:id/allocation', summary: 'Animals, their codes and who holds each share (mahallu admin)',
+  protected: true, middleware: auth }, (_input, req) => allocationService.view(currentUser(req), idParam(req.params.id)));
+route({ method: 'post', path: '/programs/:id/allocate', summary: 'Create animals with unique codes and auto-allocate every booking; replaces earlier allocation (mahallu admin)',
+  protected: true, middleware: auth, body: empty }, (_input, req) => allocationService.allocate(currentUser(req), idParam(req.params.id)));
+route({ method: 'put', path: '/bookings/:id/allocation', summary: 'Manually place the shares of a booking on animals (mahallu admin)',
+  protected: true, middleware: auth, body: allocationInput }, (input, req) => allocationService.editBooking(currentUser(req), idParam(req.params.id), input));
+route({ method: 'post', path: '/programs/:id/draw', summary: 'Randomly draw the slaughter order and time slots (mahallu admin)',
+  protected: true, middleware: auth, body: drawInput }, (input, req) => allocationService.draw(currentUser(req), idParam(req.params.id), input));
+route({ method: 'put', path: '/programs/:id/order', summary: 'Set the slaughter order by hand after the draw (mahallu admin)',
+  protected: true, middleware: auth, body: orderInput }, (input, req) => allocationService.reorder(currentUser(req), idParam(req.params.id), input.animalIds));

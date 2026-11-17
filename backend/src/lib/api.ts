@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const api = Router();
 const paths: Record<string, Record<string, unknown>> = {};
-type Method = 'get' | 'post' | 'patch' | 'delete';
+type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export function route<S extends z.ZodType = z.ZodUndefined>(options: {
   method: Method;

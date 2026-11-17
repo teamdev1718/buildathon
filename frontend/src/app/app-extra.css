@@ -65,3 +65,11 @@
 .am .am-stepper output span { font-size: 13px; color: var(--muted); }
 .am .am-inline .inp { flex: 1; min-width: 0; }
 .am .am-mahallu.am-link h3 { font-size: 22px; }
+
+/* Allocation */
+.am .am-place { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: var(--bg2); border-radius: 16px; padding: 12px 14px; }
+.am .am-place .inp { width: 96px; min-height: 44px; text-align: center; }
+.am .am-draw .am-inline .field { max-width: 260px; }
+.am .am-placed { display: grid; gap: 8px; }
+.am .am-placed-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; background: var(--mint-soft); border-radius: 14px; padding: 10px 12px; font-size: 14px; }
+.am .am-code { font-family: var(--font-mono); font-weight: 600; background: #fff; border-radius: 999px; padding: 3px 10px; letter-spacing: .06em; }

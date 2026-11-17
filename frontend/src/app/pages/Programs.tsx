@@ -5,7 +5,8 @@ import { useApp } from '../lib/app-context';
 import { animalEmoji, animalLabel, dateText, inr, shareText, splitName, type Animal, type PayMode, type Program, type AnimalType } from '../lib/programs';
 import { ErrorNote, Loading, PageHead, useAction, useFetch } from '../ui/kit';
 
-type MyBooking = { id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number };
+type Placed = { code: string; shares: number; drawOrder: number | null; slotAt: string | null };
+type MyBooking = { id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number; animals: Placed[] };
 type MyProgram = Program & { mahalluName: string; household: { id: string; ownerName: string; mahalluNumber: string }; bookings: MyBooking[] };
 
 function Stepper({ value, onChange, disabled }: { value: number; onChange(next: number): void; disabled?: boolean }) {
@@ -14,6 +15,16 @@ function Stepper({ value, onChange, disabled }: { value: number; onChange(next: 
     <output aria-live="polite"><b>{value}</b><span>{value === 1 ? 'share' : 'shares'}</span></output>
     <button type="button" className="iconbtn" aria-label="More shares" disabled={disabled || value >= 100} onClick={() => onChange(value + 1)}>+</button>
   </div>;
+}
+
+const slotText = (value: string) => new Date(value).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+function PlacedList({ items }: { items: Placed[] }) {
+  if (!items.length) return <p className="am-note" style={{ margin: 0 }}>Your animal is assigned after bookings close.</p>;
+  return <div className="am-placed">{items.map(item => <div key={item.code} className="am-placed-row">
+    <span className="am-code">{item.code}</span>
+    <span>{item.shares} {item.shares === 1 ? 'share' : 'shares'}</span>
+    <span className="am-sub">{item.drawOrder ? `#${item.drawOrder} in line${item.slotAt ? ' · ' + slotText(item.slotAt) : ''}` : 'Order not drawn yet'}</span></div>)}</div>;
 }
 
 function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; animal: Animal; booking?: MyBooking; reload(): void }) {
@@ -35,6 +46,7 @@ function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; 
       <div className="seg" role="group" aria-label="How will you pay?">{(['INSTALLMENTS', 'ONE_TIME'] as const).map(value =>
         <button key={value} type="button" className={mode === value ? 'on' : ''} onClick={() => setMode(value)}>{value === 'ONE_TIME' ? 'One-time' : 'Installments'}</button>)}</div>
       <div className="kv"><span>Total</span><b>{inr(total)}</b></div>
+      {booking && <PlacedList items={booking.animals} />}
       {error && <p className="am-error" role="alert">{error}</p>}
       <div className="row-actions">
         <button type="button" className="pillbtn" disabled={busy || !dirty} onClick={() => run(async () => {
@@ -47,6 +59,7 @@ function AnimalCard({ program, animal, booking, reload }: { program: MyProgram; 
           void run(async () => { await api('/bookings/' + booking.id, 'DELETE', {}, true); toast('Booking cancelled'); reload(); });
         }}>Cancel</button>}
       </div></> : booking ? <div className="kv"><span>{booking.shares} {booking.shares === 1 ? 'share' : 'shares'}</span><b>{inr(booking.amount)}</b></div> : null}
+    {!open && booking && <PlacedList items={booking.animals} />}
   </article>;
 }
 
