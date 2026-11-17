@@ -193,7 +193,7 @@ export const programService = {
           const animal = row.animals.find(item => item.animalType === booking.animalType)!;
           const money = financeOf({ ...booking, program: row });
           return { id: booking.id, animalType: booking.animalType, shares: booking.shares, payMode: booking.payMode,
-            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal), autopay: booking.autopay, money,
+            amount: bookingTotal(booking.shares, animal.price, animal.sharesPerAnimal), autopay: booking.autopay, money, bookedAt: booking.createdAt,
             payments: booking.payments.map(item => ({ id: item.id, amount: item.amount, method: item.method, status: item.status,
               note: item.note, createdAt: item.createdAt })),
             animals: booking.allocations.map(item => ({ code: item.animal.code, shares: item.shares, drawOrder: item.animal.drawOrder, status: item.animal.status,

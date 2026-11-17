@@ -3,24 +3,14 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
 import { animalLabel, shareText, type AnimalType } from '../lib/programs';
-import { IconBell, IconClock, IconCut, IconHourglass, IconKnife, IconLayers, IconPackage, IconTag, IconUsers } from '../ui/Icons';
+import { IconBell, IconClock, IconLayers, IconPackage, IconTag, IconUsers } from '../ui/Icons';
 import { ErrorNote, Loading, useAction, useFetch } from '../ui/kit';
-import type { Status } from './VolunteerAnimals';
+import { Photo, Skyline, Stepper, ordinal, statusWord, steps, when as time, type Status } from '../ui/visuals';
 
 type Mine = { id: string; code: string; animalType: AnimalType; shares: number; status: Status; drawOrder: number | null; slotAt: string | null; ahead: number | null };
 type Handover = { id: string; packets: number; createdAt: string; receivedAt: string | null; household: { ownerName: string; mahalluNumber: string } };
 type Tracked = { id: string; name: string; status: string; handovers: Handover[]; animals: Mine[];
   queue: { total: number; pending: number; slaughtered: number; processing: number; packed: number; upNext: { code: string; drawOrder: number } | null } };
-
-const time = (value: string) => new Date(value).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-const ordinal = (n: number) => { const v = n % 100; return n + (['th', 'st', 'nd', 'rd'][(v - 20) % 10] ?? ['th', 'st', 'nd', 'rd'][v] ?? 'th'); };
-const statusWord: Record<Status, string> = { PENDING: 'Waiting', SLAUGHTERED: 'Slaughtered', PROCESSING: 'Processing', PACKED: 'Packed' };
-const steps: { status: Status; label: string; hint: string; icon: ReactNode }[] = [
-  { status: 'PENDING', label: 'Waiting', hint: 'In queue for slaughter', icon: <IconHourglass /> },
-  { status: 'SLAUGHTERED', label: 'Slaughtered', hint: 'Animal has been slaughtered', icon: <IconKnife /> },
-  { status: 'PROCESSING', label: 'Processing', hint: 'Cutting and weighing', icon: <IconCut /> },
-  { status: 'PACKED', label: 'Packed', hint: 'Meat is ready for distribution', icon: <IconPackage /> },
-];
 
 function nextUpdate(item: Mine | undefined) {
   if (!item) return 'Once you have an animal, updates about it appear here.';
@@ -29,24 +19,6 @@ function nextUpdate(item: Mine | undefined) {
   if (item.status === 'SLAUGHTERED') return 'Processing starts soon. We will tell you when your meat is packed.';
   if (item.status === 'PROCESSING') return 'We will notify you when your meat is packed.';
   return 'Your meat is packed. We will tell you when it is handed to your household.';
-}
-
-/** A photo slot: put goat.jpg, sheep.jpg, cow.jpg and camel.jpg in frontend/public/animals and they show here; otherwise a plain tile. */
-function Photo({ type }: { type: AnimalType }) {
-  const [failed, setFailed] = useState(false);
-  return <div className={'am-photo am-photo-' + type.toLowerCase()}>
-    {!failed && <img src={`/animals/${type.toLowerCase()}.jpg`} alt={animalLabel[type]} loading="lazy" onError={() => setFailed(true)} />}
-    {failed && <span aria-hidden="true">{animalLabel[type]}</span>}
-  </div>;
-}
-
-function Stepper({ status }: { status: Status }) {
-  const at = steps.findIndex(step => step.status === status);
-  return <ol className="am-steps" aria-label={`Processing progress: ${statusWord[status]}`}>
-    <li className="am-steps-line" aria-hidden="true"><i style={{ width: `${at / (steps.length - 1) * 100}%` }} /></li>
-    {steps.map((step, index) => <li key={step.status} className={index < at ? 'done' : index === at ? 'now' : ''} aria-current={index === at ? 'step' : undefined}>
-      <span className="am-node">{step.icon}</span><b>{step.label}</b><small>{step.hint}</small></li>)}
-  </ol>;
 }
 
 function AnimalCard({ item, total }: { item: Mine; total: number }) {
@@ -61,23 +33,13 @@ function AnimalCard({ item, total }: { item: Mine; total: number }) {
         <button type="button" className="am-linkbtn" aria-expanded={details} onClick={() => setDetails(value => !value)}>Animal details →</button>
       </div>
     </div>
-    <div className="am-trackcard-steps"><h3>Processing progress</h3><Stepper status={item.status} /></div>
+    <div className="am-trackcard-steps"><h3>Processing progress</h3><Stepper list={steps} at={steps.findIndex(step => step.key === item.status)} label={`Processing progress: ${statusWord[item.status]}`} /></div>
     {details && <div className="am-trackcard-details">
       <div className="kv"><span>Animal</span><b>{animalLabel[item.animalType]} · {shareText(item.animalType === 'GOAT' || item.animalType === 'SHEEP' ? 1 : 7)}</b></div>
       <div className="kv"><span>Your shares</span><b>{item.shares}</b></div>
       <div className="kv"><span>Planned time</span><b>{item.slotAt ? time(item.slotAt) : 'Not scheduled yet'}</b></div>
       <div className="kv"><span>Queue</span><b>{item.drawOrder ? `${ordinal(item.drawOrder)} overall` : 'Not drawn yet'}</b></div></div>}
   </article>;
-}
-
-function Skyline() {
-  return <svg className="am-skyline" viewBox="0 0 420 150" aria-hidden="true">
-    <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8cc9b3" stopOpacity=".55" /><stop offset="1" stopColor="#dcebe2" stopOpacity=".1" /></linearGradient></defs>
-    <path d="M0 150V108c40-26 82-30 128-12 30 12 54 14 82-2 40-22 92-22 130 4 34 22 56 18 80 6v46z" fill="url(#sk)" />
-    <path d="M232 150v-26c0-22 18-38 42-38s42 16 42 38v26z" fill="#9fd1bd" fillOpacity=".7" /><path d="M274 86v-8" stroke="#8cc9b3" strokeWidth="3" />
-    <rect x="334" y="52" width="12" height="98" fill="#9fd1bd" fillOpacity=".75" /><path d="M334 52l6-22 6 22z" fill="#9fd1bd" fillOpacity=".75" />
-    <path d="M370 40a16 16 0 1 0 10 28 13 13 0 1 1-10-28z" fill="#b9dccd" />
-  </svg>;
 }
 
 function Program({ program, reload }: { program: Tracked; reload(): void }) {

@@ -7,6 +7,7 @@ import { PlacedList } from '../ui/booking';
 import { ErrorNote, Loading, useFetch } from '../ui/kit';
 import { PaymentPanel } from './PaymentPanel';
 import { SelectionModal } from './SelectionModal';
+import { MemberDashboard } from './MemberDashboard';
 import { skipKey } from './Welcome';
 
 type Mahallu = { id: string; active: boolean; households: number; admins: unknown[] };
@@ -99,6 +100,9 @@ export function Home() {
       return <Navigate to="/app/welcome" replace />;
     }
   }
+
+  // Members get the full personal dashboard once they have chosen an animal.
+  if (plainMember && mine.data && mine.data.some(item => item.bookings.length > 0)) return <MemberDashboard programs={mine.data} reload={mine.reload} />;
 
   const first = user.name.split(' ')[0];
   const place = activeMahallu?.mahalluName ?? volunteer?.mahalluName ?? house?.mahalluName;

@@ -27,6 +27,12 @@ test('programs: admin sets prices and starts; members book; access stays inside 
   const aliceHome = houses.find((row: { mahalluNumber: string }) => row.mahalluNumber === '1').id as string;
   const bobHome = houses.find((row: { mahalluNumber: string }) => row.mahalluNumber === '2').id as string;
 
+  // A member can keep a contact phone on their profile; it must look like a phone number.
+  assert.equal((await call(alice, 'patch', '/users/me', { phone: 'abc' })).status, 400);
+  assert.equal((await call(alice, 'patch', '/users/me', { phone: '+91 90723 45678' })).body.phone, '+91 90723 45678');
+  assert.equal((await call(alice, 'get', '/auth/me')).body.phone, '+91 90723 45678');
+  assert.equal((await call(alice, 'patch', '/users/me', { phone: null })).body.phone, null);
+
   // Only the mahallu's own admin manages programs.
   const body = { name: 'Udhiyya 2027', year: 2027, targetDate: '2027-05-26' };
   assert.equal((await call(alice, 'post', `/mahallus/${north.id}/programs`, body)).status, 403);

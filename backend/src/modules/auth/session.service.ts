@@ -81,7 +81,7 @@ export async function authenticate(header: string | undefined) {
   const session = await db.refreshSession.findFirst({
     where: { id: payload.sid, userId: payload.sub, revokedAt: null, expiresAt: { gt: new Date() } },
     select: { user: { select: { id: true, name: true, email: true, verifiedAt: true,
-      emailOptIn: true, telegramChatId: true,
+      emailOptIn: true, telegramChatId: true, phone: true,
       roles: { select: { role: { include: { permissions: true } } } },
     } } },
   });

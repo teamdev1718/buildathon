@@ -17,7 +17,7 @@ export const splitName = (name: string) => { const at = name.lastIndexOf(' '); r
 
 export type Placed = { code: string; shares: number; drawOrder: number | null; slotAt: string | null; status: 'PENDING' | 'SLAUGHTERED' | 'PROCESSING' | 'PACKED' };
 export type MyBooking = {
-  id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number; animals: Placed[]; autopay: boolean;
+  id: string; animalType: AnimalType; shares: number; payMode: PayMode; amount: number; animals: Placed[]; autopay: boolean; bookedAt: string;
   money: import('../pages/PaymentPanel').Money; payments: import('../pages/PaymentPanel').PaymentRow[];
 };
 export type MyProgram = Program & { mahalluName: string; household: { id: string; ownerName: string; mahalluNumber: string }; bookings: MyBooking[] };
@@ -30,4 +30,33 @@ export function monthlyEstimate(total: number, payBy: string, now = new Date()) 
   const months = (end.getUTCFullYear() - now.getUTCFullYear()) * 12 + end.getUTCMonth() - now.getUTCMonth() - (end.getUTCDate() < now.getUTCDate() ? 1 : 0);
   const count = Math.max(1, months);
   return { months: count, monthly: Math.ceil(total / count) };
+}
+
+export type PlanRow = { label: string; due: string; amount: number; state: 'PAID' | 'DUE' | 'OVERDUE' | 'UPCOMING'; paidOn: string | null };
+
+/** The month-by-month plan: payments are applied to the earliest instalments first. */
+export function planRows(booking: MyBooking, payBy: string, now = new Date()): PlanRow[] {
+  const total = booking.money.total;
+  const confirmed = booking.payments.filter(item => item.status === 'CONFIRMED').sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
+  const count = booking.payMode === 'ONE_TIME' ? 1 : Math.max(1, booking.money.installments);
+  const monthly = booking.payMode === 'ONE_TIME' ? total : booking.money.monthlyAmount;
+  const limit = new Date(payBy);
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const rows: PlanRow[] = [];
+  let needed = 0, firstOpen = true;
+  for (let i = 0; i < count; i++) {
+    const amount = i === count - 1 ? Math.max(0, total - monthly * (count - 1)) : monthly;
+    needed += amount;
+    const start = new Date(booking.bookedAt);
+    const due = booking.payMode === 'ONE_TIME' ? limit : new Date(Math.min(new Date(start.setUTCMonth(start.getUTCMonth() + i)).getTime(), limit.getTime()));
+    let running = 0, paidOn: string | null = null;
+    for (const item of confirmed) { running += item.amount; if (running >= needed) { paidOn = item.createdAt; break; } }
+    const paid = booking.money.paid >= needed;
+    let state: PlanRow['state'] = 'UPCOMING';
+    if (paid) state = 'PAID';
+    else if (firstOpen) { state = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate()) < +today ? 'OVERDUE' : 'DUE'; firstOpen = false; }
+    rows.push({ label: booking.payMode === 'ONE_TIME' ? 'Full payment' : due.toLocaleDateString('en-IN', { month: 'short', year: 'numeric', timeZone: 'UTC' }),
+      due: due.toISOString(), amount, state, paidOn: paid ? paidOn ?? due.toISOString() : null });
+  }
+  return rows;
 }

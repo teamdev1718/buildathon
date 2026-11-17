@@ -15,7 +15,7 @@ export type PaymentRow = { id: string; amount: number; method: 'CASH' | 'ONLINE'
 const standingText = { PAID: 'Paid in full', ON_TRACK: 'On track', BEHIND: 'Payment due' } as const;
 const statusText = { PENDING: 'Pending', CONFIRMED: 'Paid', REJECTED: 'Not completed' } as const;
 
-function PayModal({ bookingId, money, close, done }: { bookingId: string; money: Money; close(): void; done(): void }) {
+export function PayModal({ bookingId, money, close, done }: { bookingId: string; money: Money; close(): void; done(): void }) {
   const { user } = useAuth();
   const { toast } = useApp();
   const config = useFetch<{ online: boolean }>('/payments/config');

@@ -4,6 +4,7 @@ export type User = {
   email: string;
   verifiedAt: string;
   emailOptIn: boolean;
+  phone: string | null;
   telegramConnected: boolean;
   roles: string[];
   permissions: string[];

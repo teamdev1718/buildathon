@@ -7,6 +7,8 @@ import { IconBack, IconBell, IconCard, IconChart, IconChevronRight, IconClock, I
 import './app.css';
 import './app-extra.css';
 import './app-layout.css';
+import './app-pages.css';
+import './app-pages2.css';
 
 type Item = { to: string; label: string; icon: ReactNode; end?: boolean };
 

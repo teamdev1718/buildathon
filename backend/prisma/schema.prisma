@@ -35,6 +35,7 @@ model User {
   enrollments     Enrollment[]
   meatTokens      MeatToken[]
   username        String?  @unique
+  phone           String?
   staffRoles      MahalluStaff[]
   volunteer       Volunteer?
   inbox           InboxItem[]
