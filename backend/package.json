@@ -8,7 +8,7 @@
     "typecheck": "prisma generate && tsc --noEmit",
     "start": "node dist/server.js",
     "test": "tsx --test test/unit.test.ts test/udhiyya.unit.test.ts",
-    "test:integration": "tsx --test test/integration.test.ts test/udhiyya.integration.test.ts",
+    "test:integration": "tsx --test test/integration.test.ts test/udhiyya.integration.test.ts test/mahallus.integration.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts"

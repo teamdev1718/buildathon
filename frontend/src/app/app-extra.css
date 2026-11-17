@@ -1,0 +1,43 @@
+/* Additions for screens that the reference dashboard does not have. They reuse its tokens. */
+.am { min-height: 100vh; }
+.am-loading { min-height: 60vh; display: grid; place-content: center; justify-items: center; gap: 14px; color: var(--muted); }
+.am-headrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.am-note { color: var(--muted); padding: 8px 0; }
+.am-error { background: #fdece8; color: var(--coral-ink); padding: 11px 14px; border-radius: 14px; font-size: 14px; margin: 10px 0; }
+.am-ok { background: var(--mint-soft); color: var(--green-deep); padding: 11px 14px; border-radius: 14px; font-size: 14px; margin: 10px 0; }
+.am .avatar.sm { width: 42px; height: 42px; font-size: 13px; }
+.am .dnav .avatar { margin-left: 4px; }
+.am .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.am .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.am .stack { display: grid; gap: 22px; }
+.am .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.am .pillbtn.ghost { background: #fff; color: var(--green); box-shadow: inset 0 0 0 1.5px var(--line); }
+.am .pillbtn.ghost:hover { background: var(--bg2); }
+.am .pillbtn.sm { min-height: 42px; padding: 0 18px; font-size: 14px; }
+.am .pillbtn.danger { background: #fff; color: var(--coral-ink); box-shadow: inset 0 0 0 1.5px #f3c7bf; }
+.am .pillbtn:disabled, .am .chipbtn:disabled { opacity: .55; cursor: not-allowed; }
+.am .tx-wrap { overflow-x: auto; margin: 0 -8px; padding: 0 8px; }
+.am .tag.off { background: #fdece8; color: var(--coral-ink); }
+.am .drop { border: 2px dashed var(--mint); border-radius: 22px; padding: 26px; text-align: center; background: var(--bg2); transition: background .2s, border-color .2s; }
+.am .drop.over { background: var(--mint-soft); border-color: var(--mid); }
+.am .drop input[type=file] { display: none; }
+.am .am-chip-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.am .am-person { display: flex; align-items: center; gap: 10px; background: var(--bg2); border-radius: 999px; padding: 6px 8px 6px 14px; font-size: 14px; }
+.am .am-person button { font-size: 12.5px; font-weight: 600; color: var(--coral-ink); padding: 4px 10px; border-radius: 999px; background: #fff; }
+.am .mahallu-row .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.am .am-card-list { display: grid; gap: 16px; }
+.am .am-mahallu { padding: 22px; border-radius: var(--r-md); background: #fff; box-shadow: var(--shadow); display: grid; gap: 14px; }
+.am .am-mahallu h3 { font-size: 20px; }
+.am .am-mahallu .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.am .am-inline { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.am .am-inline .field { flex: 1; min-width: 200px; margin: 0; }
+.am-reveal { animation: am-rise .6s cubic-bezier(.2, .7, .2, 1) both; }
+.am-reveal:nth-child(2) { animation-delay: .06s; } .am-reveal:nth-child(3) { animation-delay: .12s; } .am-reveal:nth-child(4) { animation-delay: .18s; }
+@keyframes am-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) { .am .grid2, .am .grid3 { grid-template-columns: 1fr; } .am .mwrap .stat-grid { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { .am-reveal { animation: none; } }
+.am .dnav nav a, .am .dside-nav a, .am .mtabs a { display: inline-flex; align-items: center; text-decoration: none; }
+.am .dside-nav a { display: flex; }
+.am .mtabs a { flex-direction: column; justify-content: center; }
+.am .pillbtn { text-decoration: none; }
+.am a.pillbtn.light { color: var(--green-deep); }

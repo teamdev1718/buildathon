@@ -1,0 +1,28 @@
+/* Restyles the existing sign-in forms to match the app design. */
+.am-auth { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; padding: 16px; color: var(--ink);
+  background: radial-gradient(90% 70% at 50% 100%, #5fb396 0%, #1f7a5d 38%, #0d4535 72%, #08382a 100%); }
+.am-auth-nav { max-width: 1100px; width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;
+  background: rgba(255, 255, 255, .78); backdrop-filter: blur(14px); border-radius: 22px; padding: 10px 18px; box-shadow: 0 10px 30px rgba(8, 36, 25, .18); }
+.am-auth-back { font-weight: 600; font-size: 14.5px; color: var(--ink2); }
+.am-auth main { display: grid; place-items: center; padding: 28px 0 48px; }
+.am-auth .panel { background: #fff; border: 0; border-radius: 32px; width: min(460px, 100%); padding: 34px;
+  box-shadow: 0 30px 60px rgba(8, 36, 25, .3); animation: am-rise .7s cubic-bezier(.2, .7, .2, 1) both; }
+.am-auth h1 { font-family: var(--font-head); font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; margin-bottom: 14px; }
+.am-auth p { color: var(--muted); }
+.am-auth .stack { display: grid; gap: 14px; }
+.am-auth form { margin-top: 18px; }
+.am-auth .field { display: grid; gap: 7px; font-weight: 600; font-size: 13.5px; color: var(--ink2); margin: 0; }
+.am-auth input:not([type=checkbox]) { width: 100%; min-height: 50px; border: 1.5px solid var(--line); border-radius: 14px; padding: 11px 15px;
+  font: inherit; font-weight: 400; background: #fff; transition: border-color .15s, box-shadow .15s; }
+.am-auth input:focus { border-color: var(--mid); box-shadow: 0 0 0 3px rgba(42, 143, 114, .15); outline: none; }
+.am-auth button[type=submit], .am-auth a.button { display: inline-flex; align-items: center; justify-content: center; min-height: 50px;
+  border-radius: 999px; background: var(--green); color: #fff; font-weight: 600; font-size: 15px; padding: 0 24px; border: 0;
+  box-shadow: 0 8px 20px rgba(14, 92, 72, .25); transition: background .15s, transform .15s; width: 100%; }
+.am-auth button[type=submit]:hover, .am-auth a.button:hover { background: var(--green-dark); filter: none; }
+.am-auth button[type=submit]:active { transform: scale(.98); }
+.am-auth button.secondary, .am-auth a.button.secondary { background: #fff; color: var(--green); box-shadow: inset 0 0 0 1.5px var(--line); min-height: 46px; border-radius: 999px; font-weight: 600; width: 100%; }
+.am-auth .auth-links { margin-top: 18px; text-align: center; }
+.am-auth .auth-links a:not(.button) { color: var(--green); font-weight: 600; font-size: 14.5px; }
+.am-auth .notice { background: var(--mint-soft); color: var(--green-deep); border-radius: 14px; padding: 11px 14px; font-size: 14px; }
+.am-auth .notice.error { background: #fdece8; color: var(--coral-ink); }
+@media (max-width: 520px) { .am-auth .panel { padding: 26px 20px; border-radius: 28px; } }

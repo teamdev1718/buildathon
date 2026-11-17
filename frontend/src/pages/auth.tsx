@@ -47,7 +47,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
             return 'Check your inbox for your sign-in code.';
           }
           await accept(result.accessToken);
-          navigate('/dashboard', { replace: true });
+          navigate('/app', { replace: true });
         } catch (error) {
           if (error instanceof ApiError && error.code === 'EMAIL_UNVERIFIED') return go('/verify-email', email);
           throw error;

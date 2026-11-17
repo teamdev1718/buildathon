@@ -4,6 +4,13 @@ import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useNavigate } fro
 import { AuthProvider, useAuth } from './contexts/auth';
 import { AuthPage } from './pages/auth';
 import { Dashboard, Profile } from './pages/account';
+import { Landing } from './pages/landing';
+import { AuthLayout } from './app/AuthLayout';
+import { AppRoot, Require } from './app/guards';
+import { Home as AppHome } from './app/pages/Home';
+import { Mahallus } from './app/pages/Mahallus';
+import { Members } from './app/pages/Members';
+import { Join } from './app/pages/Join';
 import { Udhiyya } from './pages/udhiyya';
 import { Collector } from './pages/udhiyya-collect';
 import { UdhiyyaAdmin } from './pages/udhiyya-admin';
@@ -43,32 +50,31 @@ function Protected() {
   return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function Home() {
-  const { user } = useAuth();
-  return <section className="hero">
-    <h1>Udhiyya, one month at a time</h1>
-    <p>Save for your family’s Udhiyya in small monthly installments through your mahal, then collect your share of the meat with a simple token.</p>
-    <div className="actions">{user ? <Link className="button" to="/udhiyya">Open Udhiyya</Link> : <>
-      <Link className="button" to="/register">Create an account</Link>
-      <Link className="button secondary" to="/login">Sign in</Link>
-    </>}</div>
-  </section>;
-}
-
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter><AuthProvider><Routes><Route element={<Layout />}>
-    <Route index element={<Home />} />
-    <Route path="login" element={<AuthPage key="login" mode="login" />} />
-    <Route path="register" element={<AuthPage key="register" mode="register" />} />
-    <Route path="verify-email" element={<AuthPage key="verify" mode="verify" />} />
-    <Route path="forgot-password" element={<AuthPage key="forgot" mode="forgot" />} />
-    <Route path="reset-password" element={<AuthPage key="reset" mode="reset" />} />
-    <Route element={<Protected />}><Route path="dashboard" element={<Dashboard />} />
-      <Route path="profile" element={<Profile />} />
-      <Route path="udhiyya" element={<Udhiyya />} />
-      <Route path="udhiyya/collect" element={<Collector />} />
-      <Route path="udhiyya/manage" element={<UdhiyyaAdmin />} /></Route>
-    <Route path="*" element={<section className="panel"><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
-  </Route></Routes></AuthProvider></BrowserRouter>,
+  <BrowserRouter><AuthProvider><Routes>
+    <Route index element={<Landing />} />
+    <Route element={<AuthLayout />}>
+      <Route path="login" element={<AuthPage key="login" mode="login" />} />
+      <Route path="register" element={<AuthPage key="register" mode="register" />} />
+      <Route path="verify-email" element={<AuthPage key="verify" mode="verify" />} />
+      <Route path="forgot-password" element={<AuthPage key="forgot" mode="forgot" />} />
+      <Route path="reset-password" element={<AuthPage key="reset" mode="reset" />} />
+    </Route>
+    <Route element={<Protected />}>
+      <Route path="app" element={<AppRoot />}>
+        <Route index element={<AppHome />} />
+        <Route element={<Require allow="super" />}><Route path="mahallus" element={<Mahallus />} /></Route>
+        <Route element={<Require allow="admin" />}><Route path="members" element={<Members />} /></Route>
+        <Route path="join" element={<Join />} />
+      </Route>
+    </Route>
+    <Route element={<Layout />}>
+      <Route element={<Protected />}><Route path="dashboard" element={<Dashboard />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="udhiyya" element={<Udhiyya />} />
+        <Route path="udhiyya/collect" element={<Collector />} />
+        <Route path="udhiyya/manage" element={<UdhiyyaAdmin />} /></Route>
+      <Route path="*" element={<section className="panel"><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
+    </Route>
+  </Routes></AuthProvider></BrowserRouter>,
 );
-

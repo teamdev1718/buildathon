@@ -34,6 +34,9 @@ model User {
   telegramLink    TelegramLink?
   enrollments     Enrollment[]
   meatTokens      MeatToken[]
+  username        String?  @unique
+  staffRoles      MahalluStaff[]
+  households      Household[]
   @@schema("app_private")
 }
 
@@ -314,5 +317,55 @@ model MeatToken {
   @@unique([cycleId, userId])
   @@unique([cycleId, beneficiaryId])
   @@index([cycleId, status])
+  @@schema("app_private")
+}
+
+enum StaffRole {
+  MAHALLU_ADMIN
+  VOLUNTEER
+  @@schema("app_private")
+}
+
+model Mahallu {
+  id         String @id @default(uuid())
+  name       String
+  district   String
+  code       String @unique
+  active     Boolean @default(true)
+  createdAt  DateTime @default(now())
+  staff      MahalluStaff[]
+  households Household[]
+  @@schema("app_private")
+}
+
+model MahalluStaff {
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mahalluId String
+  mahallu   Mahallu @relation(fields: [mahalluId], references: [id], onDelete: Cascade)
+  role      StaffRole
+  createdAt DateTime @default(now())
+  @@id([userId, mahalluId, role])
+  @@index([mahalluId, role])
+  @@schema("app_private")
+}
+
+model Household {
+  id             String @id @default(uuid())
+  mahalluId      String
+  mahallu        Mahallu @relation(fields: [mahalluId], references: [id], onDelete: Cascade)
+  mahalluNumber  String
+  ownerName      String
+  memberCount    Int
+  address        String
+  phone          String
+  userId         String?
+  user           User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@unique([mahalluId, mahalluNumber])
+  @@unique([userId, mahalluId])
+  @@index([mahalluId, ownerName])
+  @@index([phone])
   @@schema("app_private")
 }
