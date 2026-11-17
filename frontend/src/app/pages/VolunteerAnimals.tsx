@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
-import { animalEmoji, animalLabel, type AnimalType } from '../lib/programs';
+import { animalLabel, type AnimalType } from '../lib/programs';
 import { ErrorNote, Loading, PageHead, useAction, useFetch } from '../ui/kit';
 
 export type Status = 'PENDING' | 'SLAUGHTERED' | 'PROCESSING' | 'PACKED';
@@ -38,8 +38,7 @@ export function VolunteerAnimals() {
         const at = steps.findIndex(step => step.status === item.status);
         const next = steps[at + 1];
         return <article key={item.id} className={'am-animal' + (item.status === 'PACKED' ? ' booked' : '')}>
-          <div className="am-headrow"><div className="am-animal-head"><span className="ic am-emoji" aria-hidden="true">{animalEmoji[item.animalType]}</span>
-            <div><h3 style={{ fontFamily: 'var(--font-mono)' }}>{item.code}</h3><div className="am-sub">{animalLabel[item.animalType]}</div></div></div>
+          <div className="am-headrow"><div className="am-animal-head"><div><h3 style={{ fontFamily: 'var(--font-mono)' }}>{item.code}</h3><div className="am-sub">{animalLabel[item.animalType]}</div></div></div>
             <span className="tag">{item.drawOrder ? `#${item.drawOrder}` : 'Not drawn'}{item.slotAt ? ` · ${when(item.slotAt)}` : ''}</span></div>
           <StatusTrack status={item.status} />
           {next ? <button type="button" className="pillbtn" disabled={busy} onClick={() => run(async () => {

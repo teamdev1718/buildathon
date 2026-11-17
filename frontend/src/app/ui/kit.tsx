@@ -30,6 +30,7 @@ export function useFetch<T>(path: string | null) {
   useEffect(() => {
     if (!path) return;
     let active = true;
+    setState(previous => previous.loading ? previous : { ...previous, loading: true });
     api<T>(path, 'GET', undefined, true).then(
       data => { if (active) setState({ data, error: '', loading: false }); },
       error => { if (active) setState({ data: null, loading: false, error: error instanceof Error ? error.message : 'Could not load.' }); });

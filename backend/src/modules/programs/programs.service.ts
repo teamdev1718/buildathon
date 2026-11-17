@@ -168,6 +168,10 @@ export const programService = {
 
   async cancelBooking(actor: Actor, bookingId: string) {
     await programService.bookingAccess(actor, bookingId);
+    // Deleting a booking would also delete its payment records, so a booking that has any money activity cannot be cancelled.
+    if (await db.programPayment.count({ where: { bookingId, status: { in: ['CONFIRMED', 'PENDING'] } } })) {
+      throw new ApiError(409, 'HAS_PAYMENTS', 'This booking has payments on record. Ask your mahallu committee to adjust it.');
+    }
     await db.booking.delete({ where: { id: bookingId } });
     return { removed: true };
   },

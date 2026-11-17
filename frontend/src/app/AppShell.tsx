@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth';
 import { greeting, initials, useApp } from './lib/app-context';
-import { IconBack, IconBell, IconCard, IconChart, IconChevronRight, IconClock, IconHand, IconCompass, IconDoc, IconHeart, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
+import { IconBack, IconBell, IconCard, IconChart, IconChevronRight, IconClock, IconHand, IconCompass, IconDoc, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
 import './app.css';
 import './app-extra.css';
 
@@ -25,14 +25,12 @@ function useItems(): Item[] {
   const member = (ctx?.households.length ?? 0) > 0;
   const items: Item[] = [{ to: '/app', label: 'Home', icon: <IconHome />, end: true }];
   if (isSuper) items.push({ to: '/app/mahallus', label: 'Mahallus', icon: <IconShield /> });
-  if (adminOf.length) items.push({ to: '/app/members', label: 'Members', icon: <IconUsers /> });
+  if (adminOf.length) items.push({ to: '/app/members', label: 'Members', icon: <IconUsers /> }, { to: '/app/manage/programs', label: 'Programs', icon: <IconDoc /> },
+    { to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> });
   if (volunteer?.canStatus) items.push({ to: '/app/volunteer/animals', label: 'Animals', icon: <IconChart /> });
   if (volunteer?.canDistribute) items.push({ to: '/app/volunteer/distribute', label: 'Distribute', icon: <IconHand /> });
-  if (adminOf.length) items.push({ to: '/app/manage/programs', label: member ? 'Manage programs' : 'Programs', icon: <IconDoc /> });
-  if (member) items.push({ to: '/app/programs', label: 'Programs', icon: <IconHeart /> }, { to: '/app/tracking', label: 'Tracking', icon: <IconClock /> },
-    { to: '/app/payments', label: 'Payments', icon: <IconCard /> });
-  if (adminOf.length) items.push({ to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> });
-  if (!volunteer) items.push({ to: '/app/join', label: 'My Mahallu', icon: <IconCompass /> });
+  if (member && !adminOf.length) items.push({ to: '/app/tracking', label: 'Tracking', icon: <IconClock /> }, { to: '/app/payments', label: 'Payments', icon: <IconCard /> });
+  items.push({ to: '/app/profile', label: 'Profile', icon: <IconCompass /> });
   return items;
 }
 
@@ -66,7 +64,7 @@ function Desktop({ items }: { items: Item[] }) {
       </nav>
       <button type="button" className="iconbtn" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} id="d-bell"
         onClick={() => navigate('/app/notifications')}><IconBell />{unread > 0 && <span className="badge">{unread}</span>}</button>
-      <button type="button" className="loginlink" onClick={async () => { await signOut(); navigate('/login'); }}>Sign out</button>
+      <button type="button" className="loginlink" onClick={async () => { sessionStorage.removeItem('udhiyya-onboarding-skipped'); await signOut(); navigate('/login'); }}>Sign out</button>
       <span className="avatar sm" aria-hidden="true">{initials(user.name)}</span>
     </header>
 
@@ -127,7 +125,7 @@ function Mobile({ items }: { items: Item[] }) {
       <div className="msheet-body">
         {rest.map(item => <button key={item.to} type="button" className="mlist-row" onClick={() => navigate(item.to)}>
           <span className="ic">{item.icon}</span><span className="grow"><span className="t">{item.label}</span></span><IconChevronRight /></button>)}
-        <button type="button" className="mlist-row" onClick={async () => { await signOut(); navigate('/login'); }}>
+        <button type="button" className="mlist-row" onClick={async () => { sessionStorage.removeItem('udhiyya-onboarding-skipped'); await signOut(); navigate('/login'); }}>
           <span className="ic"><IconX /></span><span className="grow"><span className="t">Sign out</span></span></button>
       </div>
     </div>}

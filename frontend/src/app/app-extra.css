@@ -53,7 +53,6 @@
 .am .am-animal.off { opacity: .6; }
 .am .am-animal h3 { font-size: 20px; }
 .am .am-animal-head { display: flex; align-items: center; gap: 12px; }
-.am .am-emoji { width: 48px; height: 48px; border-radius: 16px; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); }
 .am .am-sub { font-size: 13px; color: var(--muted); }
 .am .am-price b { display: block; font-family: var(--font-head); font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--ink2); }
 .am .am-price span { font-size: 13px; color: var(--muted); }
@@ -112,3 +111,42 @@
 .am .notif-row .grow a { font-weight: 600; font-size: 14px; }
 @media (max-width: 760px) { .am .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .am-public-main { padding: 22px 16px 32px; } }
 @media (max-width: 420px) { .am .stat .v { font-size: 20px; } }
+
+/* First-login slides */
+.am-focus { min-height: 100vh; display: grid; align-items: start; }
+.am-welcome { width: min(760px, 100%); margin: 0 auto; padding: 28px 18px 40px; display: grid; gap: 22px; }
+.am-welcome-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.am-welcome-head h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; }
+.am-dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.am-dots li { flex: 1; display: grid; gap: 7px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.am-dots li i { height: 6px; border-radius: 99px; background: var(--mint-soft); position: relative; overflow: hidden; }
+.am-dots li i::after { content: ''; position: absolute; inset: 0; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+.am-dots li.done i::after, .am-dots li.now i::after { transform: scaleX(1); }
+.am-dots li.now { color: var(--green-deep); }
+.am-slides { overflow: hidden; border-radius: 32px; background: #fff; box-shadow: var(--shadow); }
+.am-slides-track { display: flex; transition: transform .5s cubic-bezier(.32, .9, .35, 1); will-change: transform; }
+.am-slide { flex: 0 0 100%; min-width: 0; padding: clamp(22px, 5vw, 40px); display: grid; gap: 14px; align-content: start; min-height: 360px; }
+.am-slide h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; }
+.am-lead { color: var(--muted); font-size: 16px; max-width: 520px; }
+.am-options { display: grid; gap: 12px; margin-top: 6px; }
+.am-option { display: flex; align-items: center; gap: 14px; text-align: left; width: 100%; background: var(--bg2); border: 1.5px solid transparent; border-radius: 20px;
+  padding: 16px 18px; transition: border-color .2s, background .2s, transform .2s; }
+.am-option:hover { border-color: var(--mint); transform: translateY(-1px); }
+.am-option.on { background: var(--mint-soft); border-color: var(--green); }
+.am-radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mint); flex: none; position: relative; transition: border-color .2s; }
+.am-option.on .am-radio { border-color: var(--green); }
+.am-option.on .am-radio::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--green); animation: am-pop .25s cubic-bezier(.2, .9, .3, 1.4); }
+.am-option-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.am-option-text b { font-family: var(--font-head); font-size: 18px; color: var(--ink2); }
+.am-option-text span { font-size: 14px; color: var(--muted); }
+.am-option-aside { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: var(--green-deep); text-align: right; }
+.am-summary { display: grid; gap: 16px; max-width: 460px; }
+.am-recap { box-shadow: none; background: var(--bg2); padding: 18px; }
+.am-welcome-actions { display: flex; justify-content: space-between; gap: 12px; }
+.am-done { display: grid; gap: 14px; justify-items: start; }
+.am-tick { width: 68px; height: 68px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; animation: am-pop .5s cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes am-pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.am-edit { background: var(--bg2); border-radius: 20px; padding: 16px; display: grid; gap: 12px; }
+@media (max-width: 520px) { .am-dots li span { display: none; } .am-option { padding: 14px; } .am-option-aside { font-size: 13px; } .am-welcome { padding-top: 18px; } }
+@media (prefers-reduced-motion: reduce) { .am-slides-track { transition: none; } .am-tick, .am-option.on .am-radio::after { animation: none; } }
+@media (max-width: 520px) { .am-option { flex-wrap: wrap; } .am-option-aside { flex-basis: 100%; text-align: left; padding-left: 36px; } }

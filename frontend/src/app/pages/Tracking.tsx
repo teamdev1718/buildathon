@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
-import { animalEmoji, animalLabel, splitName, type AnimalType } from '../lib/programs';
+import { animalLabel, splitName, type AnimalType } from '../lib/programs';
 import { ErrorNote, Loading, PageHead, useAction, useFetch } from '../ui/kit';
 import { StatusTrack, type Status } from './VolunteerAnimals';
 
@@ -16,8 +16,7 @@ const time = (value: string) => new Date(value).toLocaleString('en-IN', { weekda
 function Animal({ item }: { item: Mine }) {
   const next = item.status === 'PENDING' && item.ahead === 0;
   return <article className={'am-animal' + (next ? ' booked' : '')}>
-    <div className="am-headrow"><div className="am-animal-head"><span className="ic am-emoji" aria-hidden="true">{animalEmoji[item.animalType]}</span>
-      <div><h3 style={{ fontFamily: 'var(--font-mono)' }}>{item.code}</h3><div className="am-sub">{animalLabel[item.animalType]} · your {item.shares} {item.shares === 1 ? 'share' : 'shares'}</div></div></div>
+    <div className="am-headrow"><div className="am-animal-head"><div><h3 style={{ fontFamily: 'var(--font-mono)' }}>{item.code}</h3><div className="am-sub">{animalLabel[item.animalType]} · your {item.shares} {item.shares === 1 ? 'share' : 'shares'}</div></div></div>
       {item.drawOrder && <span className="tag">#{item.drawOrder} in line</span>}</div>
     <StatusTrack status={item.status} />
     {next && <p className="am-ok" style={{ margin: 0 }}><b>You are next.</b> Please be ready.</p>}
@@ -52,7 +51,7 @@ function Program({ program, reload }: { program: Tracked; reload(): void }) {
       {error && <ErrorNote message={error} />}
       {program.handovers.map(row => <div key={row.id} className="am-history-row" style={{ padding: '14px 0' }}>
         <span><b>{row.packets} {row.packets === 1 ? 'packet' : 'packets'}</b><span className="am-sub"> · {time(row.createdAt)}</span></span>
-        {row.receivedAt ? <span className="tag">Received ✓</span> :
+        {row.receivedAt ? <span className="tag">Received</span> :
           <button type="button" className="pillbtn sm" disabled={busy} onClick={() => run(async () => { await api(`/distributions/${row.id}/confirm`, 'POST', {}, true); toast('Thanks for confirming'); reload(); })}>I received it</button>}
       </div>)}</div>}
   </section>;

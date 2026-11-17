@@ -89,6 +89,10 @@ test('payments: cash and Razorpay, schedule, signatures, webhook, history and ac
     globalThis.fetch = realFetch;
   }
 
+  // A booking with money on record cannot be cancelled, by the member or the admin.
+  assert.equal((await call(alice, 'delete', `/bookings/${aliceId}`)).status, 409);
+  assert.equal((await call(admin, 'delete', `/bookings/${aliceId}`)).status, 409);
+
   // Cash: only the mahallu admin records it, within the balance, and mistakes can be voided.
   assert.equal((await call(alice, 'post', `/bookings/${aliceId}/payments/cash`, { amount: 100 })).status, 403);
   assert.equal((await call(admin, 'post', `/bookings/${aliceId}/payments/cash`, { amount: 15001 })).status, 409);

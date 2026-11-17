@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
-import { animalEmoji, animalLabel, type AnimalType } from '../lib/programs';
+import { animalLabel, type AnimalType } from '../lib/programs';
 import { ErrorNote, Field, Loading, Modal, useAction, useFetch } from '../ui/kit';
 
 type Holder = { bookingId: string; shares: number; mahalluNumber: string; ownerName: string };
@@ -86,7 +86,7 @@ export function Allocation({ programId, open, onChange }: { programId: string; o
         <tbody>{data.animals.map((unit, index) => <tr key={unit.id}>
           {data.drawn && <td className="amt">{unit.drawOrder}</td>}
           <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{unit.code}</td>
-          <td>{animalEmoji[unit.animalType]} {animalLabel[unit.animalType]}</td>
+          <td>{animalLabel[unit.animalType]}</td>
           <td><span className={'tag' + (unit.filled < unit.capacity ? ' amber' : '')}>{unit.filled}/{unit.capacity}</span></td>
           <td style={{ minWidth: 220 }}>{unit.holders.length ? unit.holders.map(item => `${item.ownerName} (${item.mahalluNumber})${item.shares > 1 ? ' ×' + item.shares : ''}`).join(', ') : '—'}</td>
           {data.drawn && <td>{when(unit.slotAt)}</td>}
@@ -102,7 +102,7 @@ export function Allocation({ programId, open, onChange }: { programId: string; o
       <div className="tx-wrap"><table className="tx"><thead><tr><th>House</th><th>Owner</th><th>Animal</th><th>Shares</th><th>Placed on</th>{open && <th />}</tr></thead>
         <tbody>{data.bookings.map(row => <tr key={row.id}>
           <td style={{ fontFamily: 'var(--font-mono)' }}>{row.household.mahalluNumber}</td><td><b>{row.household.ownerName}</b></td>
-          <td>{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</td>
+          <td>{animalLabel[row.animalType]}</td>
           <td><span className={'tag' + (row.allocated < row.shares ? ' off' : '')}>{row.allocated}/{row.shares}</span></td>
           <td>{row.allocations.map(item => { const unit = data.animals.find(a => a.id === item.animalId); return `${unit?.code ?? '?'}${item.shares > 1 ? ' ×' + item.shares : ''}`; }).join(', ') || '—'}</td>
           {open && <td><button type="button" className="chipbtn" onClick={() => setEditing(row)}>Edit</button></td>}

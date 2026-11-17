@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
-import { animalEmoji, animalLabel, dateText, inr, shareText, splitName, statusLabel, type Animal, type AnimalType, type Program, type PayMode } from '../lib/programs';
+import { animalLabel, dateText, inr, shareText, splitName, statusLabel, type Animal, type AnimalType, type Program, type PayMode } from '../lib/programs';
 import { CustomSelect } from '../ui/CustomSelect';
 import { Allocation } from './ManageAllocation';
 import { CashModal, PaymentsCard } from './ManagePayments';
@@ -23,8 +23,7 @@ function AnimalCard({ program, animal, reload }: { program: Program; animal: Ani
   const save = (body: object, message: string) => run(async () => { await api(`/programs/${program.id}/animals/${animal.animalType}`, 'PATCH', body, true); toast(message); reload(); });
   const changed = Number(price || 0) !== animal.price;
   return <article className={'am-animal' + (animal.enabled ? '' : ' off')}>
-    <div className="am-headrow"><div className="am-animal-head"><span className="ic am-emoji" aria-hidden="true">{animalEmoji[animal.animalType]}</span>
-      <div><h3>{animalLabel[animal.animalType]}</h3><div className="am-sub">{shareText(animal.sharesPerAnimal)}</div></div></div>
+    <div className="am-headrow"><div className="am-animal-head"><div><h3>{animalLabel[animal.animalType]}</h3><div className="am-sub">{shareText(animal.sharesPerAnimal)}</div></div></div>
       <label className="switch" title={animal.enabled ? 'Offered to members' : 'Hidden from members'}>
         <input type="checkbox" checked={animal.enabled} disabled={busy || locked} aria-label={`Offer ${animalLabel[animal.animalType]}`}
           onChange={event => save({ enabled: event.target.checked }, event.target.checked ? 'Animal offered' : 'Animal hidden')} /><span className="tr" /></label></div>
@@ -97,12 +96,12 @@ export function ManageProgram() {
       {bookings.loading && !bookings.data ? <Loading /> : !bookings.data ? <ErrorNote message={bookings.error} /> : <>
         {bookings.data.totals.length > 0 && <div className="stat-grid" role="list" style={{ marginTop: 0 }}>
           {bookings.data.totals.map(row => <div className="stat" role="listitem" key={row.animalType}>
-            <div className="eyebrow">{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</div>
+            <div className="eyebrow">{animalLabel[row.animalType]}</div>
             <div className="v">{row.animalsNeeded}</div><div className="s">{row.animalsNeeded === 1 ? 'animal' : 'animals'} for {row.shares} {row.shares === 1 ? 'share' : 'shares'} · {inr(row.amount)}</div></div>)}</div>}
         {bookings.data.rows.length === 0 ? <div className="empty"><h3>No bookings yet</h3><p>{p.status === 'DRAFT' ? 'Start the program to let households book.' : 'Bookings will appear here as households join.'}</p></div> :
           <div className="tx-wrap" style={{ marginTop: 18 }}><table className="tx"><thead><tr><th>House</th><th>Owner</th><th>Animal</th><th>Shares</th><th>Plan</th><th>Total</th><th>Paid</th><th>Status</th>{p.status === 'OPEN' && <th />}</tr></thead>
             <tbody>{bookings.data.rows.map(row => <tr key={row.id}><td style={{ fontFamily: 'var(--font-mono)' }}>{row.household.mahalluNumber}</td><td><b>{row.household.ownerName}</b></td>
-              <td>{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</td><td>{row.shares}</td><td>{row.payMode === 'ONE_TIME' ? 'One-time' : 'Installments'}</td><td className="amt">{inr(row.amount)}</td><td className="amt">{inr(row.paid)}</td>
+              <td>{animalLabel[row.animalType]}</td><td>{row.shares}</td><td>{row.payMode === 'ONE_TIME' ? 'One-time' : 'Installments'}</td><td className="amt">{inr(row.amount)}</td><td className="amt">{inr(row.paid)}</td>
               <td><span className={'tag' + (row.standing === 'BEHIND' ? ' amber' : '')}>{row.standing === 'PAID' ? 'Paid' : row.standing === 'BEHIND' ? 'Due' : 'On track'}</span></td>
               {p.status === 'OPEN' && <td><div className="row-actions">{row.remaining > 0 && <button type="button" className="chipbtn" onClick={() => setCash(row)}>Cash</button>}<button type="button" className="chipbtn" onClick={() => {
                 if (!window.confirm(`Cancel ${row.household.ownerName}'s booking?`)) return;

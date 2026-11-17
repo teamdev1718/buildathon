@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../../api/client';
 import { useApp } from '../lib/app-context';
-import { animalEmoji, animalLabel, dateText, inr, type AnimalType } from '../lib/programs';
+import { animalLabel, dateText, inr, type AnimalType } from '../lib/programs';
 import { ErrorNote, Field, form, Loading, Modal, useAction, useFetch } from '../ui/kit';
 
 type Row = { id: string; amount: number; method: 'CASH' | 'ONLINE'; status: 'PENDING' | 'CONFIRMED' | 'REJECTED'; note: string | null; createdAt: string;
@@ -59,7 +59,7 @@ export function PaymentsCard({ programId, open, refreshKey, onChange }: { progra
       <div className="tx-wrap"><table className="tx"><thead><tr><th>Date</th><th>Household</th><th>Animal</th><th>Method</th><th>Status</th><th style={{ textAlign: 'right' }}>Amount</th><th /></tr></thead>
         <tbody>{data.rows.map(row => <tr key={row.id}><td>{dateText(row.createdAt)}</td>
           <td><b>{row.household.ownerName}</b><div className="am-sub">{row.household.mahalluNumber}{row.note ? ' · ' + row.note : ''}</div></td>
-          <td>{animalEmoji[row.animalType]} {animalLabel[row.animalType]}</td><td>{row.method === 'CASH' ? 'Cash' : 'Online'}</td>
+          <td>{animalLabel[row.animalType]}</td><td>{row.method === 'CASH' ? 'Cash' : 'Online'}</td>
           <td><span className={'status' + (row.status === 'PENDING' ? ' pend' : row.status === 'REJECTED' ? ' disp' : '')}>{statusText[row.status]}</span></td>
           <td className="amt" style={{ textAlign: 'right' }}>{inr(row.amount)}</td>
           <td>{open && row.method === 'CASH' && row.status === 'CONFIRMED' && <button type="button" className="chipbtn" onClick={() => setNote({ id: row.id, text: '' })}>Void</button>}</td></tr>)}</tbody></table></div>}

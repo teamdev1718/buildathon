@@ -11,14 +11,13 @@ import { TransparencyIndex, TransparencyLedger } from './app/pages/Transparency'
 import { Tracking } from './app/pages/Tracking';
 import { Notifications } from './app/pages/Notifications';
 import { ManageLedger } from './app/pages/ManageLedger';
-import { AppRoot, Require } from './app/guards';
+import { AppRoot, Require, WelcomeRoot } from './app/guards';
 import { Home as AppHome } from './app/pages/Home';
 import { Mahallus } from './app/pages/Mahallus';
 import { Members } from './app/pages/Members';
-import { Join } from './app/pages/Join';
 import { ManagePrograms } from './app/pages/ManagePrograms';
 import { ManageProgram } from './app/pages/ManageProgram';
-import { Programs } from './app/pages/Programs';
+import { Profile as AppProfile } from './app/pages/Profile';
 import { Payments } from './app/pages/Payments';
 import { Volunteers } from './app/pages/Volunteers';
 import { VolunteerAnimals } from './app/pages/VolunteerAnimals';
@@ -74,6 +73,7 @@ createRoot(document.getElementById('root')!).render(
       <Route path="transparency/:id" element={<TransparencyLedger />} />
     </Route>
     <Route element={<Protected />}>
+      <Route path="app/welcome" element={<WelcomeRoot />} />
       <Route path="app" element={<AppRoot />}>
         <Route index element={<AppHome />} />
         <Route element={<Require allow="super" />}><Route path="mahallus" element={<Mahallus />} /></Route>
@@ -83,11 +83,12 @@ createRoot(document.getElementById('root')!).render(
           <Route path="manage/programs" element={<ManagePrograms />} /><Route path="manage/programs/:id" element={<ManageProgram />} /></Route>
         <Route element={<Require allow="status" />}><Route path="volunteer/animals" element={<VolunteerAnimals />} /></Route>
         <Route element={<Require allow="distribute" />}><Route path="volunteer/distribute" element={<VolunteerDistribute />} /></Route>
-        <Route path="programs" element={<Programs />} />
+        <Route path="programs" element={<Navigate to="/app" replace />} />
+        <Route path="profile" element={<AppProfile />} />
         <Route path="payments" element={<Payments />} />
         <Route path="tracking" element={<Tracking />} />
         <Route path="notifications" element={<Notifications />} />
-        <Route path="join" element={<Join />} />
+        <Route path="join" element={<Navigate to="/app/profile" replace />} />
       </Route>
     </Route>
     <Route element={<Layout />}>
