@@ -335,6 +335,7 @@ model Mahallu {
   createdAt  DateTime @default(now())
   staff      MahalluStaff[]
   households Household[]
+  programs   Program[]
   @@schema("app_private")
 }
 
@@ -363,9 +364,69 @@ model Household {
   user           User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  bookings       Booking[]
   @@unique([mahalluId, mahalluNumber])
   @@unique([userId, mahalluId])
   @@index([mahalluId, ownerName])
   @@index([phone])
+  @@schema("app_private")
+}
+
+enum ProgramStatus {
+  DRAFT
+  OPEN
+  ENDED
+  @@schema("app_private")
+}
+
+enum PayMode {
+  ONE_TIME
+  INSTALLMENTS
+  @@schema("app_private")
+}
+
+model Program {
+  id          String @id @default(uuid())
+  mahalluId   String
+  mahallu     Mahallu @relation(fields: [mahalluId], references: [id], onDelete: Cascade)
+  name        String
+  year        Int
+  targetDate  DateTime
+  description String?
+  status      ProgramStatus @default(DRAFT)
+  openedAt    DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+  animals     ProgramAnimal[]
+  bookings    Booking[]
+  @@index([mahalluId, status])
+  @@schema("app_private")
+}
+
+model ProgramAnimal {
+  id              String @id @default(uuid())
+  programId       String
+  program         Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  animalType      AnimalType
+  price           Int @default(0)
+  enabled         Boolean @default(true)
+  sharesPerAnimal Int
+  @@unique([programId, animalType])
+  @@schema("app_private")
+}
+
+model Booking {
+  id          String @id @default(uuid())
+  programId   String
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  animalType  AnimalType
+  shares      Int
+  payMode     PayMode @default(INSTALLMENTS)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@unique([programId, householdId, animalType])
+  @@index([householdId])
   @@schema("app_private")
 }

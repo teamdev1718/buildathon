@@ -16,6 +16,7 @@ import './modules/users/users.routes.js';
 import './modules/chatbot/chatbot.routes.js';
 import './modules/telegram/telegram.routes.js';
 import './modules/mahallus/mahallus.routes.js';
+import './modules/programs/programs.routes.js';
 import './modules/udhiyya/cycles.routes.js';
 import './modules/udhiyya/enrollments.routes.js';
 import './modules/udhiyya/distribution.routes.js';

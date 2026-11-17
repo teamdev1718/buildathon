@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { api } from '../../api/client';
 
-export function PageHead({ eyebrow, title, sub, action }: { eyebrow: string; title: ReactNode; sub?: string; action?: ReactNode }) {
+export function PageHead({ eyebrow, title, sub, action }: { eyebrow: ReactNode; title: ReactNode; sub?: string; action?: ReactNode }) {
   return <div className="pagehead"><div className="am-headrow"><div>
     <div className="eyebrow"><span className="dot" />{eyebrow}</div>
     <h1 style={{ marginTop: 12 }}>{title}</h1>{sub && <p>{sub}</p>}</div>{action}</div></div>;

@@ -11,9 +11,9 @@ import { Home as AppHome } from './app/pages/Home';
 import { Mahallus } from './app/pages/Mahallus';
 import { Members } from './app/pages/Members';
 import { Join } from './app/pages/Join';
-import { Udhiyya } from './pages/udhiyya';
-import { Collector } from './pages/udhiyya-collect';
-import { UdhiyyaAdmin } from './pages/udhiyya-admin';
+import { ManagePrograms } from './app/pages/ManagePrograms';
+import { ManageProgram } from './app/pages/ManageProgram';
+import { Programs } from './app/pages/Programs';
 import { ChatWidget } from './features/chat/widget';
 import './styles.css';
 
@@ -24,9 +24,7 @@ function Layout() {
   const [busy, setBusy] = useState(false);
   return <>
     <header><nav aria-label="Main navigation"><Link to="/" className="brand">Udhiyya Saver</Link>
-      {user ? <><Link to="/udhiyya">Udhiyya</Link>
-        {user.permissions.includes('udhiyya.collect') && <Link to="/udhiyya/collect">Collector desk</Link>}
-        {user.permissions.includes('udhiyya.manage') && <Link to="/udhiyya/manage">Manage</Link>}
+      {user ? <><Link to="/app">Open app</Link>
         <Link to="/dashboard">Dashboard</Link><Link to="/profile">Profile</Link>
         <button className="secondary" disabled={busy} onClick={async () => {
           setBusy(true);
@@ -64,16 +62,15 @@ createRoot(document.getElementById('root')!).render(
       <Route path="app" element={<AppRoot />}>
         <Route index element={<AppHome />} />
         <Route element={<Require allow="super" />}><Route path="mahallus" element={<Mahallus />} /></Route>
-        <Route element={<Require allow="admin" />}><Route path="members" element={<Members />} /></Route>
+        <Route element={<Require allow="admin" />}><Route path="members" element={<Members />} />
+          <Route path="manage/programs" element={<ManagePrograms />} /><Route path="manage/programs/:id" element={<ManageProgram />} /></Route>
+        <Route path="programs" element={<Programs />} />
         <Route path="join" element={<Join />} />
       </Route>
     </Route>
     <Route element={<Layout />}>
       <Route element={<Protected />}><Route path="dashboard" element={<Dashboard />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="udhiyya" element={<Udhiyya />} />
-        <Route path="udhiyya/collect" element={<Collector />} />
-        <Route path="udhiyya/manage" element={<UdhiyyaAdmin />} /></Route>
+        <Route path="profile" element={<Profile />} /></Route>
       <Route path="*" element={<section className="panel"><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
     </Route>
   </Routes></AuthProvider></BrowserRouter>,

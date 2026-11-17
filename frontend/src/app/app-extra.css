@@ -41,3 +41,27 @@
 .am .mtabs a { flex-direction: column; justify-content: center; }
 .am .pillbtn { text-decoration: none; }
 .am a.pillbtn.light { color: var(--green-deep); }
+
+/* Programs */
+.am .am-link { text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; }
+.am .am-link:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(11, 42, 34, .1); }
+.am .am-back { display: inline-block; margin: 0 0 18px; font-weight: 600; font-size: 14.5px; }
+.am .am-grid-animals { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.am .am-animal { background: #fff; border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow); display: grid; gap: 14px; align-content: start;
+  border: 1.5px solid transparent; transition: border-color .2s, opacity .2s; }
+.am .am-animal.booked { border-color: var(--mint); }
+.am .am-animal.off { opacity: .6; }
+.am .am-animal h3 { font-size: 20px; }
+.am .am-animal-head { display: flex; align-items: center; gap: 12px; }
+.am .am-emoji { width: 48px; height: 48px; border-radius: 16px; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); }
+.am .am-sub { font-size: 13px; color: var(--muted); }
+.am .am-price b { display: block; font-family: var(--font-head); font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--ink2); }
+.am .am-price span { font-size: 13px; color: var(--muted); }
+.am .am-stepper { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 999px; padding: 4px; }
+.am .am-stepper .iconbtn { background: #fff; font-size: 22px; font-weight: 600; box-shadow: 0 2px 8px rgba(11, 42, 34, .08); }
+.am .am-stepper .iconbtn:disabled { opacity: .4; cursor: not-allowed; }
+.am .am-stepper output { display: flex; align-items: baseline; gap: 6px; }
+.am .am-stepper output b { font-family: var(--font-head); font-size: 24px; font-weight: 800; }
+.am .am-stepper output span { font-size: 13px; color: var(--muted); }
+.am .am-inline .inp { flex: 1; min-width: 0; }
+.am .am-mahallu.am-link h3 { font-size: 22px; }

@@ -3,7 +3,9 @@ import { useAuth } from '../../contexts/auth';
 import { greeting, useApp } from '../lib/app-context';
 import { ErrorNote, Loading, useFetch } from '../ui/kit';
 
-type Mahallu = { id: string; active: boolean; households: number };
+type Mahallu = { id: string; active: boolean; households: number; admins: unknown[] };
+type ProgramRow = { id: string; name: string; status: 'DRAFT' | 'OPEN' | 'ENDED'; bookings: number };
+type Mine = { id: string; status: string; bookings: unknown[] }[];
 type Households = { total: number; linked: number; people: number };
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub: string }) {
@@ -17,28 +19,32 @@ function SuperStats() {
   return <div className="stat-grid" role="list" aria-label="Overview">
     <Stat label="Mahallus" value={data.length} sub={`${data.filter(item => item.active).length} active`} />
     <Stat label="Households" value={data.reduce((sum, item) => sum + item.households, 0)} sub="across all mahallus" />
-    <Stat label="Programs" value="—" sub="arrive in the next release" />
-    <Stat label="Payments" value="—" sub="arrive in the next release" />
+    <Stat label="Admins" value={data.reduce((sum, item) => sum + item.admins.length, 0)} sub="with committee access" />
+    <Stat label="Inactive" value={data.filter(item => !item.active).length} sub="mahallus switched off" />
   </div>;
 }
 
 function AdminStats({ mahalluId }: { mahalluId: string }) {
   const { data, error, loading } = useFetch<Households>(`/mahallus/${mahalluId}/households`);
-  if (loading) return <Loading />;
+  const programs = useFetch<ProgramRow[]>(`/mahallus/${mahalluId}/programs`);
+  if (loading || programs.loading) return <Loading />;
   if (!data) return <ErrorNote message={error} />;
+  const current = programs.data?.find(item => item.status !== 'ENDED');
   return <div className="stat-grid" role="list" aria-label="Overview">
     <Stat label="Households" value={data.total} sub="registered members" />
     <Stat label="People" value={data.people} sub="across all houses" />
     <Stat label="Signed up" value={data.linked} sub={`${data.total - data.linked} not yet linked`} />
-    <Stat label="Programs" value="—" sub="arrive in the next release" />
+    <Stat label="Program" value={current ? current.name : 'None'} sub={current ? `${current.status === 'OPEN' ? 'Open' : 'Draft'} · ${current.bookings} bookings` : 'start one under Programs'} />
   </div>;
 }
 
 export function Home() {
   const { user } = useAuth();
   const { ctx, isSuper, activeMahallu } = useApp();
-  if (!user) return null;
   const house = ctx?.households[0];
+  const mine = useFetch<Mine>(house ? '/me/programs' : null);
+  if (!user) return null;
+  const openCount = mine.data?.filter(item => item.status === 'OPEN').length;
   const first = user.name.split(' ')[0];
   const place = activeMahallu?.mahalluName ?? house?.mahalluName;
   return <div className="stack">
@@ -46,13 +52,15 @@ export function Home() {
       <span className="tag live"><i />{isSuper ? 'Super admin' : activeMahallu ? 'Mahallu admin' : house ? 'Verified member' : 'Welcome'}{place ? ' · ' + place : ''}</span>
       <h1 style={{ marginTop: 16 }}>{greeting()}, {first}<span className="serif">.</span></h1>
       <p className="sub">{isSuper ? 'Create mahallus and give their committees access.' :
-        activeMahallu ? 'Manage your members and, soon, your Udhiyya programs.' :
+        activeMahallu ? 'Manage your members and run your Udhiyya programs.' :
           house ? 'You are linked to your mahallu. Programs will appear here as soon as your committee opens one.' :
             'Link your household to your mahallu to join its Udhiyya programs.'}</p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 22, position: 'relative', zIndex: 1 }}>
         {isSuper && <Link className="pillbtn light" to="/app/mahallus">Manage mahallus</Link>}
         {activeMahallu && <Link className="pillbtn light" to="/app/members">Manage members</Link>}
         {!house && !isSuper && !activeMahallu && <Link className="pillbtn light" to="/app/join">Link my household</Link>}
+        {activeMahallu && <Link className="pillbtn light" to="/app/manage/programs">Programs</Link>}
+        {house && <Link className="pillbtn light" to="/app/programs">Browse programs</Link>}
         {house && <Link className="pillbtn light" to="/app/join">My mahallu</Link>}
       </div>
     </section>
@@ -61,7 +69,7 @@ export function Home() {
         <Stat label="Mahallu" value={house.mahalluName} sub="your community" />
         <Stat label="Mahallu number" value={house.mahalluNumber} sub="your membership" />
         <Stat label="Family members" value={house.memberCount} sub={house.ownerName} />
-        <Stat label="Programs" value="—" sub="none open yet" />
+        <Stat label="Programs" value={openCount ?? '—'} sub={openCount ? `${mine.data?.reduce((sum, item) => sum + item.bookings.length, 0)} bookings by you` : 'none open yet'} />
       </div> : null}
   </div>;
 }

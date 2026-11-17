@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth';
 import { greeting, initials, useApp } from './lib/app-context';
-import { IconBack, IconBell, IconChevronRight, IconCompass, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
+import { IconBack, IconBell, IconChevronRight, IconCompass, IconDoc, IconHeart, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
 import './app.css';
 import './app-extra.css';
 
@@ -21,10 +21,13 @@ function useWide() {
 }
 
 function useItems(): Item[] {
-  const { isSuper, adminOf } = useApp();
+  const { isSuper, adminOf, ctx } = useApp();
+  const member = (ctx?.households.length ?? 0) > 0;
   const items: Item[] = [{ to: '/app', label: 'Home', icon: <IconHome />, end: true }];
   if (isSuper) items.push({ to: '/app/mahallus', label: 'Mahallus', icon: <IconShield /> });
   if (adminOf.length) items.push({ to: '/app/members', label: 'Members', icon: <IconUsers /> });
+  if (adminOf.length) items.push({ to: '/app/manage/programs', label: member ? 'Manage programs' : 'Programs', icon: <IconDoc /> });
+  if (member) items.push({ to: '/app/programs', label: 'Programs', icon: <IconHeart /> });
   items.push({ to: '/app/join', label: 'My Mahallu', icon: <IconCompass /> });
   return items;
 }
