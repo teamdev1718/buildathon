@@ -64,7 +64,7 @@ Create the bot in BotFather. Set the token and username without the @ prefix. Us
 
 ## Gemini
 
-To enable Gemini, set `CHATBOT_PROVIDER=gemini`, `GEMINI_API_KEY`, and the bare supported model ID in `GEMINI_MODEL`. Confirm the model is available for your account, region, and quota before enabling it. A service-level timeout, output cap, and request limit apply. Missing or failed Gemini calls fall back to the built-in FAQ. [Gemini generateContent API](https://aistudio.google.com/api-reference/generate-content)
+Set `GEMINI_API_KEY` for the backend AI presets and `CHATBOT_PROVIDER=gemini` if you also want Gemini in chat. `GEMINI_MODEL` defaults to `gemini-3.1-flash-lite` and accepts a bare supported model ID. Confirm availability for your account, region, and quota. The chatbot falls back to the built-in FAQ when Gemini is unavailable. [AI presets](AI_PRESETS.md) · [Gemini generateContent API](https://aistudio.google.com/api-reference/generate-content)
 
 ## Live verification
 

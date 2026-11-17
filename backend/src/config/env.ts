@@ -31,7 +31,7 @@ const parsed = z.object({
   TELEGRAM_BOT_USERNAME: optional,
   CHATBOT_PROVIDER: z.enum(['faq', 'gemini']).default('faq'),
   GEMINI_API_KEY: optional,
-  GEMINI_MODEL: z.string().regex(/^[\w.-]+$/).optional(),
+  GEMINI_MODEL: z.string().regex(/^[\w.-]+$/).default('gemini-3.1-flash-lite'),
 }).safeParse(Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== '')));
 
 if (!parsed.success) {
