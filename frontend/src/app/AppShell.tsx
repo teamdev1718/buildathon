@@ -9,6 +9,7 @@ import './app-extra.css';
 import './app-layout.css';
 import './app-pages.css';
 import './app-pages2.css';
+import './app-volunteer.css';
 
 type Item = { to: string; label: string; icon: ReactNode; end?: boolean };
 
@@ -33,6 +34,7 @@ function useItems(): Item[] {
     { to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> });
   if (volunteer?.canStatus) items.push({ to: '/app/volunteer/animals', label: 'Animals', icon: <IconChart /> });
   if (volunteer?.canDistribute) items.push({ to: '/app/volunteer/distribute', label: 'Distribute', icon: <IconHand /> });
+  if (volunteer) items.push({ to: '/app/volunteer/activity', label: 'My activity', icon: <IconClock /> });
   if (member && !adminOf.length) items.push({ to: '/app/tracking', label: 'Animal status', icon: <IconClock /> }, { to: '/app/payments', label: 'Payments', icon: <IconCard /> });
   return items;
 }

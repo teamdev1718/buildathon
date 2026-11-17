@@ -52,7 +52,8 @@ test('payments: cash and Razorpay, schedule, signatures, webhook, history and ac
   // Online payment needs a valid amount and the member's own booking; the signature decides.
   fakeRazorpay();
   try {
-    assert.equal((await call(alice, 'get', '/payments/config')).body.online, true);
+    const config = (await call(alice, 'get', '/payments/config')).body;
+    assert.deepEqual([config.online, config.mode, config.webhook, config.keyId], [true, 'test', true, 'rzp_test_int']);
     assert.equal((await call(bob, 'post', `/bookings/${aliceId}/payments/online`, { amount: 1000 })).status, 404);
     assert.equal((await call(alice, 'post', `/bookings/${aliceId}/payments/online`, { amount: 30001 })).status, 409);
     assert.equal((await call(alice, 'post', `/bookings/${aliceId}/payments/online`, { amount: 0 })).status, 400);

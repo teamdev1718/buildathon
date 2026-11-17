@@ -8,6 +8,7 @@ import { ErrorNote, Loading, useFetch } from '../ui/kit';
 import { PaymentPanel } from './PaymentPanel';
 import { SelectionModal } from './SelectionModal';
 import { MemberDashboard } from './MemberDashboard';
+import { VolunteerDashboard } from './VolunteerDashboard';
 import { skipKey } from './Welcome';
 
 type Mahallu = { id: string; active: boolean; households: number; admins: unknown[] };
@@ -41,18 +42,6 @@ function AdminStats({ mahalluId }: { mahalluId: string }) {
     <Stat label="People" value={data.people} sub="across all houses" />
     <Stat label="Signed up" value={data.linked} sub={`${data.total - data.linked} not yet linked`} />
     <Stat label="Program" value={current ? current.name : 'None'} sub={current ? `${current.status === 'OPEN' ? 'Open' : 'Draft'} · ${current.bookings} bookings` : 'start one under Programs'} />
-  </div>;
-}
-
-function VolunteerStats() {
-  const { data, error, loading } = useFetch<{ program: { name: string } | null; canStatus: boolean; canDistribute: boolean; mahalluName: string }>('/volunteer/me');
-  if (loading && !data) return <Loading />;
-  if (!data) return <ErrorNote message={error} />;
-  return <div className="stat-grid" role="list" aria-label="Your role">
-    <Stat label="Mahallu" value={data.mahalluName} sub="where you volunteer" />
-    <Stat label="Program" value={data.program?.name ?? 'None running'} sub={data.program ? 'running now' : 'wait for the admin to start one'} />
-    <Stat label="Animal updates" value={data.canStatus ? 'Yes' : 'No'} sub="slaughter, processing, packing" />
-    <Stat label="Meat giving" value={data.canDistribute ? 'Yes' : 'No'} sub="hand packets to households" />
   </div>;
 }
 
@@ -92,6 +81,7 @@ export function Home() {
   const plainMember = !isSuper && !activeMahallu && !volunteer;
   const mine = useFetch<MyProgram[]>(house ? '/me/programs' : null);
   if (!user || !ctx) return null;
+  if (volunteer) return <VolunteerDashboard />;
 
   // A member who has not chosen anything yet is taken through the first-login slides.
   if (plainMember && sessionStorage.getItem(skipKey) !== '1') {
@@ -105,20 +95,18 @@ export function Home() {
   if (plainMember && mine.data && mine.data.some(item => item.bookings.length > 0)) return <MemberDashboard programs={mine.data} reload={mine.reload} />;
 
   const first = user.name.split(' ')[0];
-  const place = activeMahallu?.mahalluName ?? volunteer?.mahalluName ?? house?.mahalluName;
+  const place = activeMahallu?.mahalluName ?? house?.mahalluName;
   const bookings = mine.data?.some(item => item.bookings.length > 0) ?? false;
   return <div className="stack">
     <section className="hero-panel" aria-label="Welcome">
-      <span className="tag live"><i />{isSuper ? 'Super admin' : activeMahallu ? 'Mahallu admin' : volunteer ? 'Volunteer' : house ? 'Verified member' : 'Welcome'}{place ? ' · ' + place : ''}</span>
+      <span className="tag live"><i />{isSuper ? 'Super admin' : activeMahallu ? 'Mahallu admin' : house ? 'Verified member' : 'Welcome'}{place ? ' · ' + place : ''}</span>
       <h1 style={{ marginTop: 16 }}>{greeting()}, {first}<span className="serif">.</span></h1>
-      <p className="sub">{volunteer ? 'Thank you for helping your mahallu. Your tasks are below.' : isSuper ? 'Create mahallus and give their committees access.' :
+      <p className="sub">{isSuper ? 'Create mahallus and give their committees access.' :
         activeMahallu ? 'Manage your members and run your Udhiyya programs.' :
           bookings ? 'Here is your Udhiyya. Pay, and follow it all the way to your meat.' :
             house ? 'You are linked to your mahallu. Your programme will appear here as soon as your committee opens one.' :
               'Link your household to your mahallu to join its Udhiyya programme.'}</p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 22, position: 'relative', zIndex: 1 }}>
-        {volunteer?.canStatus && <Link className="pillbtn light" to="/app/volunteer/animals">Update animals</Link>}
-        {volunteer?.canDistribute && <Link className="pillbtn light" to="/app/volunteer/distribute">Give out meat</Link>}
         {isSuper && <Link className="pillbtn light" to="/app/mahallus">Manage mahallus</Link>}
         {activeMahallu && <Link className="pillbtn light" to="/app/members">Manage members</Link>}
         {activeMahallu && <Link className="pillbtn light" to="/app/manage/programs">Programs</Link>}
@@ -128,7 +116,7 @@ export function Home() {
         {bookings && <Link className="pillbtn light" to="/app/tracking">Track my animal</Link>}
       </div>
     </section>
-    {volunteer ? <VolunteerStats /> : isSuper ? <SuperStats /> : activeMahallu ? <AdminStats mahalluId={activeMahallu.mahalluId} /> : null}
+    {isSuper ? <SuperStats /> : activeMahallu ? <AdminStats mahalluId={activeMahallu.mahalluId} /> : null}
     {mine.loading && !mine.data ? <Loading /> : mine.data && <MyUdhiyya programs={mine.data} reload={mine.reload} />}
     {mine.error && <ErrorNote message={mine.error} />}
   </div>;

@@ -20,6 +20,7 @@ import { Payments } from './app/pages/Payments';
 import { Volunteers } from './app/pages/Volunteers';
 import { VolunteerAnimals } from './app/pages/VolunteerAnimals';
 import { VolunteerDistribute } from './app/pages/VolunteerDistribute';
+import { VolunteerActivity } from './app/pages/VolunteerActivity';
 import { VolunteerLogin } from './app/pages/VolunteerLogin';
 import './styles.css';
 
@@ -56,6 +57,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="manage/ledger" element={<ManageLedger />} />
           <Route path="manage/programs" element={<ManagePrograms />} /><Route path="manage/programs/:id" element={<ManageProgram />} /></Route>
         <Route element={<Require allow="status" />}><Route path="volunteer/animals" element={<VolunteerAnimals />} /></Route>
+        <Route element={<Require allow="volunteer" />}><Route path="volunteer/activity" element={<VolunteerActivity />} /></Route>
         <Route element={<Require allow="distribute" />}><Route path="volunteer/distribute" element={<VolunteerDistribute />} /></Route>
         <Route path="programs" element={<Navigate to="/app" replace />} />
         <Route path="profile" element={<AppProfile />} />

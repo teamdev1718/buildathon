@@ -74,6 +74,9 @@ test('volunteers: generated login, animal status steps, meat stock, distribution
   assert.equal((await step('PROCESSING')).status, 200);
   assert.equal((await step('PACKED')).status, 200);
   assert.equal((await step('PENDING')).status, 409);
+  const activity = (await call(session.actor, 'get', '/volunteer/activity')).body as { type: string; title: string }[];
+  assert.deepEqual(activity.map(row => [row.type, row.title]), [['ANIMAL', `${first.code} marked packed`]]);
+  assert.equal((await call(member, 'get', '/volunteer/overview')).status, 403);
   assert.equal((await call(member, 'get', '/me/programs')).body[0].bookings[0].animals.some((a: { status: string }) => a.status === 'PACKED'), true);
   assert.equal((await call(member, 'put', `/volunteer/animals/${animals[1].id}/status`, { status: 'SLAUGHTERED' })).status, 403);
   // Admin can correct a mistake in either direction; others cannot.
@@ -101,6 +104,12 @@ test('volunteers: generated login, animal status steps, meat stock, distribution
   assert.equal((await call(distSession.actor, 'post', '/volunteer/distribute', { householdId: otherHome.id, packets: 1 })).status, 404);
   const stock = (await call(distSession.actor, 'get', '/volunteer/stock')).body;
   assert.deepEqual([stock.issued, stock.distributed, stock.inHand, stock.recent.length], [20, 8, 12, 2]);
+
+  const dash = (await call(distSession.actor, 'get', '/volunteer/overview')).body;
+  assert.deepEqual([dash.volunteer.canDistribute, dash.program.name, dash.animals.total, dash.meat.issued, dash.meat.distributed, dash.meat.inHand, dash.meat.programDistributed], [true, 'Udhiyya 2027', 2, 20, 8, 12, 8]);
+  const statusDash = (await call(session.actor, 'get', '/volunteer/overview')).body;
+  assert.deepEqual([statusDash.animals.pending, statusDash.animals.processing, statusDash.animals.packed], [1, 1, 0]);
+  assert.deepEqual((await call(distSession.actor, 'get', '/volunteer/activity')).body.map((row: { type: string }) => row.type), ['HANDOVER', 'HANDOVER']);
 
   // The admin sees everything and can void a mistake.
   const overview = (await call(admin, 'get', `/programs/${program.id}/distribution`)).body;

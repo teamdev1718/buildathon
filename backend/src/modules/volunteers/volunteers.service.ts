@@ -193,6 +193,42 @@ export const volunteerService = {
     return { ...profile(volunteer), mahalluId: volunteer.mahalluId, mahalluName: volunteer.mahallu.name, program };
   },
 
+  /** Everything the volunteer dashboard shows, in one request, whichever role the volunteer has. */
+  async dashboard(userId: string) {
+    const volunteer = await db.volunteer.findUnique({ where: { userId }, include: { mahallu: { select: { name: true } } } });
+    if (!volunteer || volunteer.terminatedAt) throw new ApiError(403, 'FORBIDDEN', 'Access denied.');
+    const program = await db.program.findFirst({ where: { mahalluId: volunteer.mahalluId, status: 'OPEN' }, orderBy: { createdAt: 'desc' }, select: { id: true, name: true, status: true } });
+    const base = { volunteer: { name: volunteer.name, mahalluName: volunteer.mahallu.name, canStatus: volunteer.canStatus, canDistribute: volunteer.canDistribute }, program };
+    if (!program) return { ...base, animals: { total: 0, pending: 0, slaughtered: 0, processing: 0, packed: 0 }, meat: { issued: 0, distributed: 0, inHand: 0, programDistributed: 0 } };
+    const [groups, mine, all] = await Promise.all([
+      db.slaughterAnimal.groupBy({ by: ['status'], where: { programId: program.id }, _count: true }),
+      stockOf(db, volunteer.id, program.id),
+      db.distribution.aggregate({ _sum: { packets: true }, where: { programId: program.id } }),
+    ]);
+    const count = (status: string) => groups.find(row => row.status === status)?._count ?? 0;
+    return { ...base,
+      animals: { total: groups.reduce((sum, row) => sum + row._count, 0), pending: count('PENDING'), slaughtered: count('SLAUGHTERED'), processing: count('PROCESSING'), packed: count('PACKED') },
+      meat: { ...mine, programDistributed: all._sum.packets ?? 0 } };
+  },
+
+  /** The volunteer's own recent work: animals they moved along and meat they handed over. */
+  async activity(userId: string) {
+    const volunteer = await db.volunteer.findUnique({ where: { userId } });
+    if (!volunteer || volunteer.terminatedAt) throw new ApiError(403, 'FORBIDDEN', 'Access denied.');
+    const [animals, handovers] = await Promise.all([
+      db.slaughterAnimal.findMany({ where: { statusById: userId, status: { not: 'PENDING' } }, take: 60, orderBy: { createdAt: 'desc' } }),
+      db.distribution.findMany({ where: { volunteerId: volunteer.id }, orderBy: { createdAt: 'desc' }, take: 60,
+        include: { household: { select: { mahalluNumber: true, ownerName: true } } } }),
+    ]);
+    const entries = [
+      ...animals.map(row => ({ id: row.id, type: 'ANIMAL' as const, title: `${row.code} marked ${row.status.toLowerCase()}`, detail: row.animalType.toLowerCase(),
+        at: row.packedAt ?? row.processingAt ?? row.slaughteredAt ?? row.createdAt })),
+      ...handovers.map(row => ({ id: row.id, type: 'HANDOVER' as const, title: `${row.packets} ${row.packets === 1 ? 'packet' : 'packets'} given to ${row.household.ownerName}`,
+        detail: row.household.mahalluNumber, at: row.createdAt })),
+    ];
+    return entries.sort((a, b) => +b.at - +a.at).slice(0, 80);
+  },
+
   async animals(userId: string) {
     const volunteer = await activeVolunteer(userId, 'canStatus');
     const program = await openProgramOf(volunteer.mahalluId);

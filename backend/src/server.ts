@@ -4,6 +4,7 @@ import { app, frontendDist } from './app.js';
 import { env, production } from './config/env.js';
 import { checkDatabase, db } from './lib/db.js';
 import { log } from './lib/http.js';
+import { razorpay } from './modules/programs/razorpay.js';
 
 if (production) {
   try {
@@ -23,7 +24,10 @@ try {
   process.exit(1);
 }
 
-const server = app.listen(env.PORT, '0.0.0.0', () => log('startup.listening', { port: env.PORT }));
+const server = app.listen(env.PORT, '0.0.0.0', () => {
+  log('startup.listening', { port: env.PORT });
+  log('startup.payments', { razorpay: razorpay.enabled() ? razorpay.mode() : 'off', webhook: razorpay.webhookReady() ? 'on' : 'off' });
+});
 let shuttingDown = false;
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {

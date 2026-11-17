@@ -9,6 +9,9 @@ const sign = (key: string, text: string | Buffer) => createHmac('sha256', key).u
 export const razorpay = {
   enabled: () => razorpayEnabled,
   keyId: () => env.RAZORPAY_KEY_ID ?? '',
+  /** Razorpay test keys start with rzp_test_ and move no real money; live keys start with rzp_live_. */
+  mode: () => (env.RAZORPAY_KEY_ID?.startsWith('rzp_live_') ? 'live' : 'test') as 'live' | 'test',
+  webhookReady: () => Boolean(env.RAZORPAY_WEBHOOK_SECRET),
 
   /** Creates the order the checkout widget pays against. The amount is in paise. */
   async createOrder(input: { amountPaise: number; receipt: string; notes: Record<string, string> }, request = fetch) {

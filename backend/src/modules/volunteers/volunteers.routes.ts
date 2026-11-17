@@ -37,6 +37,10 @@ route({ method: 'put', path: '/animals/:id/status', summary: 'Set an animal\'s s
 // Volunteers: their own work.
 route({ method: 'get', path: '/volunteer/me', summary: 'Your volunteer profile and the running program', protected: true, middleware: auth },
 (_input, req) => volunteerService.me(currentUser(req).id));
+route({ method: 'get', path: '/volunteer/overview', summary: 'Animal progress and your meat packets at a glance (volunteers)', protected: true, middleware: auth },
+(_input, req) => volunteerService.dashboard(currentUser(req).id));
+route({ method: 'get', path: '/volunteer/activity', summary: 'Your recent animal updates and handovers (volunteers)', protected: true, middleware: auth },
+(_input, req) => volunteerService.activity(currentUser(req).id));
 route({ method: 'get', path: '/volunteer/animals', summary: 'Animals in slaughter order with their status (status volunteers)', protected: true, middleware: auth },
 (_input, req) => volunteerService.animals(currentUser(req).id));
 route({ method: 'put', path: '/volunteer/animals/:id/status', summary: 'Move an animal to the next step: slaughtered, processing, packed (status volunteers)',

@@ -38,7 +38,8 @@ async function confirmOrder(orderId: string, razorpayPaymentId: string, amountPa
 }
 
 export const paymentService = {
-  config: () => ({ online: razorpay.enabled(), keyId: razorpay.enabled() ? razorpay.keyId() : null }),
+  config: () => ({ online: razorpay.enabled(), keyId: razorpay.enabled() ? razorpay.keyId() : null,
+    mode: razorpay.enabled() ? razorpay.mode() : null, webhook: razorpay.webhookReady() }),
 
   /** Starts a Razorpay payment for a member's own booking. Nothing counts until the signature or webhook confirms it. */
   async startOnline(actor: Actor, bookingId: string, amount: number, request = fetch) {

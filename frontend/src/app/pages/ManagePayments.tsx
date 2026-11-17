@@ -32,6 +32,7 @@ export function PaymentsCard({ programId, open, refreshKey, onChange }: { progra
   const { toast } = useApp();
   const [note, setNote] = useState<{ id: string; text: string } | null>(null);
   const [reminder, setReminder] = useState('');
+  const gateway = useFetch<{ online: boolean; mode: 'test' | 'live' | null; webhook: boolean }>('/payments/config');
   const refresh = () => { reload(); onChange(); };
   if (loading && !data) return <Loading />;
   if (!data) return <ErrorNote message={error} />;
@@ -45,6 +46,9 @@ export function PaymentsCard({ programId, open, refreshKey, onChange }: { progra
         toast('Reminders processed');
       })}>Send reminders</button>}
     </div>
+    {gateway.data && (gateway.data.online ?
+      <p className="am-ok">Online payments are on in <b>{gateway.data.mode === 'live' ? 'live' : 'test'} mode</b>{gateway.data.mode === 'test' ? ' (no real money moves)' : ''}.{!gateway.data.webhook && ' The webhook is not set up, so a payment is only confirmed if the member returns to the app.'}</p> :
+      <p className="am-note">Online payments are off. Add the Razorpay keys on the server to turn them on. Members can still pay cash.</p>)}
     {reminder && <p className="am-ok">{reminder}</p>}
     {failure && <ErrorNote message={failure} />}
     <div className="progress" style={{ margin: '16px 0' }} role="progressbar" aria-label="Collected" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}><i style={{ width: percent + '%' }} /></div>

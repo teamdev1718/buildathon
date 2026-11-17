@@ -41,7 +41,24 @@ Render injects `PORT`. The frontend needs no deployed environment variables. A p
 
 ## Razorpay payments
 
-Start in test mode. In the Razorpay dashboard create an API key pair and set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. Keep the secret on the server only. For reliable confirmation when a member closes the browser mid-payment, add a webhook in **Settings, Webhooks** that points to `https://your-service.onrender.com/api/v1/integrations/razorpay/webhook`, subscribe to `payment.captured` and `order.paid`, and set the same secret as `RAZORPAY_WEBHOOK_SECRET`. A payment only counts as paid after the checkout signature or a signed webhook is verified. Pay with Razorpay's test cards or UPI test handles, then check the admin Payments card. Switch to live keys after Razorpay approves the account. Autopay in this release is a monthly reminder with a pay link, not an automatic debit. Automatic debits need Razorpay Subscriptions or e-mandates enabled on the account. [Razorpay payment gateway docs](https://razorpay.com/docs/payments/)
+Online payments are already built. They stay off until the server has a Razorpay key pair, and the admin Ledger page shows whether they are off, in test mode or live.
+
+1. Create a Razorpay account and open the dashboard in **Test mode**.
+2. Go to **Account & Settings, API Keys, Generate Test Key**. Copy the **Key Id** (starts with `rzp_test_`) and the **Key Secret** (shown once).
+3. Add them to the server environment. Locally put them in `backend/.env`; on Render add them under **Environment**:
+
+```
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=a-long-random-string-you-make-up
+```
+
+4. Restart the backend. The startup log prints `startup.payments` with `razorpay` set to `test` and the admin Ledger page says "Online payments are on in test mode".
+5. Webhook (recommended): in Razorpay go to **Settings, Webhooks, Add New Webhook**. Use `https://your-service.onrender.com/api/v1/integrations/razorpay/webhook`, paste the same `RAZORPAY_WEBHOOK_SECRET` as the secret, and tick `payment.captured` and `order.paid`. The webhook confirms a payment even if the member closes the browser before returning to the app. Razorpay cannot reach `localhost`, so locally skip this step or use a tunnel.
+6. Try it: book a share as a member, press **Pay now**, choose online, and pay with a Razorpay test card or UPI handle from their test-payments page. The payment shows as paid and appears under the admin Ledger.
+7. Going live: after Razorpay approves the account, generate **Live** keys (they start with `rzp_live_`), replace the two key values, and create the webhook again in live mode.
+
+A payment only counts as paid after the checkout signature or a signed webhook is verified, and the secret never reaches the browser. Autopay in this release is a monthly reminder with a pay link, not an automatic debit. Automatic debits need Razorpay Subscriptions or e-mandates enabled on the account. [Razorpay payment gateway docs](https://razorpay.com/docs/payments/)
 
 ## Gmail API email delivery
 
