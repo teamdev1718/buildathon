@@ -214,3 +214,23 @@ export const IconBox: React.FC<{ name: string; cls?: string }> = ({ name, cls })
     </span>
   );
 };
+
+const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', viewBox: '0 0 24 24' } as const;
+export const IconHourglass: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 2 4l1 2-1 2a5 5 0 0 0-2 4v4M17 2v4a5 5 0 0 1-2 4l-1 2 1 2a5 5 0 0 1 2 4v4" /></svg>
+);
+export const IconKnife: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M4 20 16 8M13 3c4 0 8 4 8 8-4-.5-7-1-9-3-1.5-1.5-2-3-2.5-5z" /></svg>
+);
+export const IconCut: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M5 12c0-4 3-7 7-7 5 0 8 3 8 8 0 4-3 7-8 7-4 0-7-4-7-8z" /><path d="M10 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0z" /></svg>
+);
+export const IconPackage: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M21 8 12 3 3 8v8l9 5 9-5zM3.3 8 12 13l8.7-5M12 22V13" /></svg>
+);
+export const IconLayers: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M12 3 3 8l9 5 9-5-9-5zM3 12.5l9 5 9-5M3 17l9 5 9-5" /></svg>
+);
+export const IconTag: React.FC<{ className?: string }> = ({ className }) => (
+  <svg {...stroke} className={className}><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01" /></svg>
+);

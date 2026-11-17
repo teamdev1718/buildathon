@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/auth';
 import { AuthPage } from './pages/auth';
-import { Dashboard, Profile } from './pages/account';
 import { Landing } from './pages/landing';
 import { AuthLayout } from './app/AuthLayout';
 import { PublicLayout } from './app/PublicLayout';
@@ -23,31 +21,7 @@ import { Volunteers } from './app/pages/Volunteers';
 import { VolunteerAnimals } from './app/pages/VolunteerAnimals';
 import { VolunteerDistribute } from './app/pages/VolunteerDistribute';
 import { VolunteerLogin } from './app/pages/VolunteerLogin';
-import { ChatWidget } from './features/chat/widget';
 import './styles.css';
-
-function Layout() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  return <>
-    <header><nav aria-label="Main navigation"><Link to="/" className="brand">Udhiyya Saver</Link>
-      {user ? <><Link to="/app">Open app</Link>
-        <Link to="/dashboard">Dashboard</Link><Link to="/profile">Profile</Link>
-        <button className="secondary" disabled={busy} onClick={async () => {
-          setBusy(true);
-          setError('');
-          try { await signOut(); navigate('/login'); }
-          catch { setError('Could not sign out. Try again.'); }
-          finally { setBusy(false); }
-        }}>{busy ? 'Signing out…' : 'Sign out'}</button>
-      </> : <Link to="/login">Sign in</Link>}
-    </nav></header>
-    <main>{error && <p className="notice error" role="alert">{error}</p>}<Outlet /></main>
-    {user && <ChatWidget />}
-  </>;
-}
 
 function Protected() {
   const { user, loading, unavailable } = useAuth();
@@ -91,10 +65,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="join" element={<Navigate to="/app/profile" replace />} />
       </Route>
     </Route>
-    <Route element={<Layout />}>
-      <Route element={<Protected />}><Route path="dashboard" element={<Dashboard />} />
-        <Route path="profile" element={<Profile />} /></Route>
-      <Route path="*" element={<section className="panel"><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
-    </Route>
+    <Route path="dashboard" element={<Navigate to="/app" replace />} />
+    <Route path="profile" element={<Navigate to="/app/profile" replace />} />
+    <Route path="*" element={<section className="panel" style={{ margin: '4rem auto' }}><h1>Page not found</h1><Link to="/">Go home</Link></section>} />
   </Routes></AuthProvider></BrowserRouter>,
 );

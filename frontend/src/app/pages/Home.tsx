@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/auth';
 import { greeting, useApp } from '../lib/app-context';
@@ -5,6 +6,7 @@ import { animalLabel, dateText, inr, payModeLabel, splitName, type MyProgram } f
 import { PlacedList } from '../ui/booking';
 import { ErrorNote, Loading, useFetch } from '../ui/kit';
 import { PaymentPanel } from './PaymentPanel';
+import { SelectionModal } from './SelectionModal';
 import { skipKey } from './Welcome';
 
 type Mahallu = { id: string; active: boolean; households: number; admins: unknown[] };
@@ -55,12 +57,15 @@ function VolunteerStats() {
 
 /** The member's own selection and nothing else: their animal, shares, payment type, money and progress. */
 function MyUdhiyya({ programs, reload }: { programs: MyProgram[]; reload(): void }) {
+  const [editing, setEditing] = useState(false);
   const mine = programs.flatMap(program => program.bookings.map(booking => ({ program, booking })));
   if (mine.length === 0) return null;
   const total = mine.reduce((sum, item) => sum + item.booking.amount, 0);
   const paid = mine.reduce((sum, item) => sum + item.booking.money.paid, 0);
   const shares = mine.reduce((sum, item) => sum + item.booking.shares, 0);
   return <>
+    {programs.some(item => item.status === 'OPEN') && <div className="am-headrow"><h2 style={{ fontSize: 22 }}>My <span className="serif">Udhiyya</span></h2>
+      <button type="button" className="pillbtn ghost sm" onClick={() => setEditing(true)}>Edit my selection</button></div>}
     <div className="stat-grid" role="list" aria-label="Your Udhiyya">
       <Stat label="Programme" value={splitName(mine[0].program.name).join('')} sub={`${mine[0].program.mahalluName} · ${dateText(mine[0].program.targetDate)}`} />
       <Stat label={mine.length === 1 ? 'Your animal' : 'Your animals'} value={mine.map(item => animalLabel[item.booking.animalType]).join(', ')} sub={`${shares} ${shares === 1 ? 'share' : 'shares'}`} />
@@ -75,6 +80,7 @@ function MyUdhiyya({ programs, reload }: { programs: MyProgram[]; reload(): void
       <PlacedList items={booking.animals} />
       <PaymentPanel bookingId={booking.id} payMode={booking.payMode} money={booking.money} payments={booking.payments} autopay={booking.autopay} open={program.status === 'OPEN'} reload={reload} />
     </article>)}</div>
+    {editing && <SelectionModal programs={programs} reload={reload} close={() => setEditing(false)} />}
   </>;
 }
 
