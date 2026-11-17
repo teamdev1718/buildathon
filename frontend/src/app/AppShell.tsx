@@ -1,17 +1,20 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ChatWidget } from '../features/chat/widget';
 import { useAuth } from '../contexts/auth';
 import { greeting, initials, useApp } from './lib/app-context';
-import { IconBack, IconBell, IconCard, IconChart, IconChevronRight, IconClock, IconCompass, IconDoc, IconHand, IconHome, IconMenu, IconShield, IconUsers } from './ui/Icons';
+import { Sidebar, roleLabel, type Group } from './Sidebar';
+import { IconBell, IconCard, IconChart, IconClock, IconDoc, IconHand, IconHome, IconMenu, IconShield, IconUsers, IconX } from './ui/Icons';
+import { IconAnimal } from './ui/more-icons';
 import './app.css';
 import './app-extra.css';
 import './app-layout.css';
 import './app-pages.css';
 import './app-pages2.css';
 import './app-volunteer.css';
+import './app-sidebar.css';
 
-type Item = { to: string; label: string; icon: ReactNode; end?: boolean };
+const storeKey = 'udhiyya-sidebar';
 
 function useWide() {
   const query = '(min-width: 1024px)';
@@ -25,25 +28,25 @@ function useWide() {
   return wide;
 }
 
-function useItems(): Item[] {
+/** What each kind of user sees in the sidebar. The phone's bottom bar uses the same list. */
+function useGroups(): Group[] {
   const { isSuper, adminOf, ctx, volunteer } = useApp();
   const member = (ctx?.households.length ?? 0) > 0;
-  const items: Item[] = [{ to: '/app', label: 'Dashboard', icon: <IconHome />, end: true }];
-  if (isSuper) items.push({ to: '/app/mahallus', label: 'Mahallus', icon: <IconShield /> });
-  if (adminOf.length) items.push({ to: '/app/members', label: 'Members', icon: <IconUsers /> }, { to: '/app/manage/programs', label: 'Programs', icon: <IconDoc /> },
-    { to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> });
-  if (volunteer?.canStatus) items.push({ to: '/app/volunteer/animals', label: 'Animals', icon: <IconChart /> });
-  if (volunteer?.canDistribute) items.push({ to: '/app/volunteer/distribute', label: 'Distribute', icon: <IconHand /> });
-  if (volunteer) items.push({ to: '/app/volunteer/activity', label: 'My activity', icon: <IconClock /> });
-  if (member && !adminOf.length) items.push({ to: '/app/tracking', label: 'Animal status', icon: <IconClock /> }, { to: '/app/payments', label: 'Payments', icon: <IconCard /> });
-  return items;
+  const groups: Group[] = [{ items: [{ to: '/app', label: 'Dashboard', icon: <IconHome />, end: true }] }];
+  if (isSuper) groups.push({ label: 'Super admin', items: [{ to: '/app/mahallus', label: 'Mahallus', icon: <IconShield /> }] });
+  if (adminOf.length) groups.push({ label: 'My mahallu', items: [
+    { to: '/app/members', label: 'Members', icon: <IconUsers /> }, { to: '/app/manage/programs', label: 'Programs', icon: <IconDoc /> },
+    { to: '/app/volunteers', label: 'Volunteers', icon: <IconHand /> }, { to: '/app/manage/ledger', label: 'Ledger', icon: <IconChart /> }] });
+  if (volunteer) groups.push({ label: 'My tasks', items: [
+    ...(volunteer.canStatus ? [{ to: '/app/volunteer/animals', label: 'Animal management', icon: <IconAnimal /> }] : []),
+    ...(volunteer.canDistribute ? [{ to: '/app/volunteer/distribute', label: 'Distribute meat', icon: <IconHand /> }] : []),
+    { to: '/app/volunteer/activity', label: 'My activity', icon: <IconClock /> }] });
+  if (member && !adminOf.length && !volunteer) groups.push({ label: 'My Udhiyya', items: [
+    { to: '/app/tracking', label: 'Animal status', icon: <IconAnimal /> }, { to: '/app/payments', label: 'Payments', icon: <IconCard /> }] });
+  return groups;
 }
 
-function roleLabel(isSuper: boolean, admin: boolean, volunteer = false) {
-  return isSuper ? 'Super admin' : admin ? 'Mahallu admin' : volunteer ? 'Volunteer' : 'Member';
-}
-
-/** The avatar button: Profile and Sign out live here instead of in the navigation. */
+/** The avatar button: Profile and Sign out live here. */
 function UserMenu({ align = 'right' }: { align?: 'left' | 'right' }) {
   const { user, signOut } = useAuth();
   const { isSuper, adminOf, volunteer } = useApp();
@@ -74,81 +77,78 @@ function UserMenu({ align = 'right' }: { align?: 'left' | 'right' }) {
   </div>;
 }
 
-function Desktop({ items }: { items: Item[] }) {
+function Desktop({ groups }: { groups: Group[] }) {
   const { user } = useAuth();
-  const { isSuper, adminOf, activeMahallu, ctx, volunteer, unread } = useApp();
+  const { unread } = useApp();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(storeKey) !== 'closed'; } catch { return true; } });
+  const toggle = useCallback(() => setOpen(value => {
+    try { localStorage.setItem(storeKey, value ? 'closed' : 'open'); } catch { /* the choice just is not remembered */ }
+    return !value;
+  }), []);
   if (!user) return null;
-  const place = activeMahallu?.mahalluName ?? volunteer?.mahalluName ?? ctx?.households[0]?.mahalluName ?? 'No mahallu yet';
   return <div className="shell-desktop" id="shell-desktop">
     <div className="marquee" aria-hidden="true"><span className="track">{'SAVE · PAY · SHARE · DISTRIBUTE · '.repeat(8)}</span></div>
     <header className="dnav">
-      <Link className="logo" to="/app" aria-label="Udhiyya Saver dashboard"><span className="mark">U</span>UDHIYYA SAVER</Link>
+      <button type="button" className="iconbtn" aria-label={open ? 'Hide menu' : 'Show menu'} aria-expanded={open} aria-controls="am-sidebar" onClick={toggle}>{open ? <IconX /> : <IconMenu />}</button>
+      {!open && <Link className="logo" to="/app" aria-label="Udhiyya Saver dashboard"><span className="mark">U</span>UDHIYYA SAVER</Link>}
+      <span className="am-spacer" />
       <button type="button" className="iconbtn" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} id="d-bell"
         onClick={() => navigate('/app/notifications')}><IconBell />{unread > 0 && <span className="badge">{unread}</span>}</button>
       <UserMenu />
     </header>
-    <div className="am-grid">
-      <aside className="am-side card" aria-label="Menu">
-        <div className="dside-user">
-          <span className="avatar" aria-hidden="true">{initials(user.name)}</span>
-          <div className="grow"><div className="n">{user.name}</div><div className="m">{roleLabel(isSuper, adminOf.length > 0, !!volunteer)} • {place}</div></div>
-        </div>
-        <nav className="dside-nav" aria-label="Sections">
-          {items.map(item => <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'on' : '')}>{item.icon}<span>{item.label}</span></NavLink>)}
-        </nav>
-        <Link className="am-side-link" to="/transparency">Public ledger</Link>
-      </aside>
+    <div className={'am-grid' + (open ? '' : ' closed')}>
+      <aside id="am-sidebar" className="am-sbwrap" aria-label="Menu" aria-hidden={!open} inert={!open}><Sidebar groups={groups} /></aside>
       <main id="d-main" tabIndex={-1} aria-label="Content"><Outlet /></main>
     </div>
   </div>;
 }
 
-function Mobile({ items }: { items: Item[] }) {
+function Mobile({ groups }: { groups: Group[] }) {
   const { user } = useAuth();
   const { unread } = useApp();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [more, setMore] = useState(false);
-  useEffect(() => setMore(false), [pathname]);
+  const [drawer, setDrawer] = useState(false);
+  useEffect(() => setDrawer(false), [pathname]);
+  useEffect(() => {
+    if (!drawer) return;
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setDrawer(false); };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [drawer]);
   if (!user) return null;
-  const overflow = items.length > 5;
-  const tabs = overflow ? items.slice(0, 4) : items;
-  const rest = overflow ? items.slice(4) : [];
+  const items = groups.flatMap(group => group.items);
+  const tabs = items.length > 4 ? items.slice(0, 4) : items;
   return <div className="shell-mobile" id="shell-mobile">
     <header className="mhead"><div className="row">
-      <UserMenu align="left" />
+      <button type="button" className="iconbtn" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><IconMenu /></button>
       <div style={{ flex: 1, minWidth: 0 }}><div className="greet">{greeting()}</div><div className="name">{user.name}</div></div>
       <button type="button" className="iconbtn" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
         onClick={() => navigate('/app/notifications')}><IconBell />{unread > 0 && <span className="badge">{unread}</span>}</button>
+      <UserMenu />
     </div></header>
     <main id="m-main" tabIndex={-1} aria-label="Content"><div className="mwrap"><Outlet /></div></main>
     <nav className="mtabs" aria-label="App">
       {tabs.map(item => <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'on' : '')}>{item.icon}<span>{item.label}</span></NavLink>)}
-      {overflow && <button type="button" className={more ? 'on' : ''} onClick={() => setMore(true)}><IconMenu /><span>More</span></button>}
+      {items.length > 4 && <button type="button" onClick={() => setDrawer(true)}><IconMenu /><span>More</span></button>}
     </nav>
-    {more && <div className="msheet" role="dialog" aria-modal="true" aria-label="More">
-      <div className="msheet-head">
-        <button type="button" className="iconbtn" style={{ background: '#fff' }} onClick={() => setMore(false)} aria-label="Close"><IconBack /></button>
-        <div style={{ flex: 1 }}><h2><span className="serif">More</span></h2></div>
-      </div>
-      <div className="msheet-body">
-        {rest.map(item => <button key={item.to} type="button" className="mlist-row" onClick={() => navigate(item.to)}>
-          <span className="ic">{item.icon}</span><span className="grow"><span className="t">{item.label}</span></span><IconChevronRight /></button>)}
-        <Link className="mlist-row" to="/transparency"><span className="ic"><IconCompass /></span><span className="grow"><span className="t">Public ledger</span></span><IconChevronRight /></Link>
-      </div>
-    </div>}
+    <div className={'am-drawer-overlay' + (drawer ? ' open' : '')} onClick={() => setDrawer(false)} aria-hidden="true" />
+    <aside className={'am-drawer' + (drawer ? ' open' : '')} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
+      <button type="button" className="iconbtn am-drawer-close" aria-label="Close menu" onClick={() => setDrawer(false)}><IconX /></button>
+      <Sidebar groups={groups} onNavigate={() => setDrawer(false)} />
+    </aside>
   </div>;
 }
 
 export function AppShell() {
   const wide = useWide();
-  const items = useItems();
+  const groups = useGroups();
   const { loading, error, reload } = useApp();
   return <div className="am">
     <a className="skip" href={wide ? '#d-main' : '#m-main'}>Skip to main content</a>
     {loading ? <p role="status" className="am-loading">Loading your workspace…</p> : error ?
       <div className="am-loading"><p>We could not load your workspace.</p><button className="pillbtn sm" onClick={() => void reload()}>Try again</button></div> :
-      <>{wide ? <Desktop items={items} /> : <Mobile items={items} />}<ChatWidget /></>}
+      <>{wide ? <Desktop groups={groups} /> : <Mobile groups={groups} />}<ChatWidget /></>}
   </div>;
 }
