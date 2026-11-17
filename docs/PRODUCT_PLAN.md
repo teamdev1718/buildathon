@@ -11,8 +11,8 @@ Build order, one slice at a time. Each phase ships backend and frontend together
 | Member (user) | Registers, then links to their household with mahallu number and phone | Programs, payments, tracking |
 
 ## Phases
-1. **Foundation (this phase):** mahallus, staff scoping, households (manual add, CSV or Excel import), super admin screen, scoped app shell for desktop and mobile, sign-in restyle, member linking.
-2. **Programs:** per-mahallu programs (Udhiyya 2027), editable animal types and prices (goat 1 share, other animals 7), start and end a program, member enrolment with share counts.
+1. **Foundation (done):** mahallus, staff scoping, households (manual add, CSV or Excel import), super admin screen, scoped app shell for desktop and mobile, sign-in restyle, member linking.
+2. **Programs (done):** per-mahallu programs (Udhiyya 2027), editable animal types and prices (goat 1 share, other animals 7), start and end a program, member enrolment with share counts.
 3. **Allocation and draw:** unique animal codes, correct animal counts, auto-allocate button, manual edits, random draw for slaughter order and time slots.
 4. **Payments:** one-time and installments, Razorpay checkout and webhook, cash recorded by admin or volunteer, history, autopay toggle, monthly reminders.
 5. **Volunteers:** generated credentials, termination, status role (slaughtered, processing, packed), distribution role (stock given, handed out, who received).
@@ -23,3 +23,5 @@ Build order, one slice at a time. Each phase ships backend and frontend together
 - Money is whole rupees. Razorpay keys come from environment variables, test mode first.
 - Households link to accounts by mahallu number plus phone. There is no SMS provider yet.
 - Excel files are read in the browser without extra dependencies.
+- Sheep count as one person per animal, like goats. Only cows and camels are shared by seven.
+- The earlier global Udhiyya module (`/udhiyya/*` API and tables) is no longer used by the UI. It is dropped when payments and meat tokens are rebuilt per mahallu in phases 4 and 5.
